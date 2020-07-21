@@ -12,9 +12,9 @@ TARGET = RadarAPP
 TEMPLATE = app
 
 
-DEFINES += QT_NO_DEBUG_OUTPUT
+#DEFINES += QT_NO_DEBUG_OUTPUT
 # disable debug output in release mode
-CONFIG(release, debug|release): DEFINES += QT_NO_DEBUG_OUTPUT
+#CONFIG(release, debug|release): DEFINES += QT_NO_DEBUG_OUTPUT
 
 SOURCES += main.cpp\
         mainwindow.cpp \
