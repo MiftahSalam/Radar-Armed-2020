@@ -57,10 +57,6 @@ int main(int argc, char *argv[])
     trail_settings.enable = config.value("trail/enable",true).toBool();
     trail_settings.trail = config.value("trail/trail",1).toInt();
 
-    adsb_settings.show = config.value("adsb/show",true).toBool();
-    adsb_settings.ip = config.value("adsb/ip","127.0.0.1").toString();
-    adsb_settings.port = config.value("adsb/port",10001).toUInt();
-
     radarHeading = 0;
 
     currentHeading = config.value("sensor/heading",0).toDouble();

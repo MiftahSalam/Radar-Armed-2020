@@ -8,7 +8,6 @@
 #include "gzdialog.h"
 #include "dialogalarm.h"
 #include "traildialog.h"
-#include "adsbdialog.h"
 #include "dialogradar.h"
 
 namespace Ui {
@@ -43,8 +42,6 @@ private slots:
 
     void on_pushButtonSetTrail_clicked();
 
-    void on_pushButtonSetADSB_clicked();
-
     void on_pushButtonRadar_clicked();
 
 private:
@@ -52,7 +49,6 @@ private:
     GZDialog *dialogGz;
     DialogAlarm *dialAlarm;
     TrailDialog *dialTrail;
-    adsbDialog *dialADSB;
     DialogRadar *dialRadar;
     RadarWidget *radarWidget;
     radarTransmit *rt;

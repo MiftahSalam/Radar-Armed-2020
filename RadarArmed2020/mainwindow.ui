@@ -69,34 +69,6 @@ background-color: rgb(35, 0, 0);</string>
       </widget>
      </item>
      <item>
-      <widget class="FrameADSB" name="frameADSBInf">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>270</width>
-         <height>195</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>270</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">border-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="FrameTrackDisplay" name="frameTrackInf">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -190,7 +162,7 @@ background-color: rgb(35, 0, 0);</string>
           <x>6</x>
           <y>26</y>
           <width>261</width>
-          <height>161</height>
+          <height>164</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -360,12 +332,6 @@ background-color: rgb(35, 0, 0);</string>
    <class>FrameOSD</class>
    <extends>QFrame</extends>
    <header>frameosd.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>FrameADSB</class>
-   <extends>QFrame</extends>
-   <header>frameadsb.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

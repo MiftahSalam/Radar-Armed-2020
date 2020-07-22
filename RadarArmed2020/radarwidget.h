@@ -41,8 +41,6 @@ private slots:
     void trigger_DrawSpoke(int transparency, int angle, u_int8_t* data, size_t len);
     void trigger_ReqDelTrack(int id);
 
-    void trigger_ReqADSBSetting();
-
 private:
     void setupViewport(int width, int height);
     void createMARPA(QPoint pos);
@@ -51,7 +49,6 @@ private:
     RI *m_ri;
     RA *arpa;
 //    qtmosq *mqtt;
-    ADSBManager *adsb;
     QTimer *timer;
     QRect region;
     QPixmap radarBlob;

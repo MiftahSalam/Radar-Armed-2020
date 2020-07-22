@@ -23,7 +23,6 @@ MainWindow::MainWindow(QWidget *parent) :
     dialogGz = new GZDialog(this);
     dialAlarm = new DialogAlarm(this);
     dialTrail = new TrailDialog(this);
-    dialADSB = new adsbDialog(this);
     dialRadar = new DialogRadar(this);
 
 #ifdef LOCALHOST
@@ -72,17 +71,13 @@ port_command=6136*/
 
     connect(radarWidget,SIGNAL(signal_target_param(int,double,double,double,double)),
             ui->frameTrackInf,SLOT(trigger_target_update(int,double,double,double,double)));
-    connect(radarWidget,SIGNAL(signal_adsb_param(QString,double,double,double,double,double)),
-            ui->frameADSBInf,SLOT(trigger_target_update(QString,double,double,double,double,double)));
     connect(radarWidget,SIGNAL(signal_cursorMove(double,double)),ui->frameCursor,SLOT(trigger_cursorMove(double, double)));
 
-    connect(dialADSB,SIGNAL(signal_settingChange()),radarWidget,SLOT(trigger_ReqADSBSetting()));
     connect(dialRadar,SIGNAL(signal_settingChange()),ri,SLOT(trigger_ReqRadarSetting()));
     connect(dialRadar,SIGNAL(signal_settingChange()),this,SLOT(trigger_ReqRadarSetting()));
 
     connect(timer,SIGNAL(timeout()),this,SLOT(timerTimeout()));
     connect(timer,SIGNAL(timeout()),ui->frameOSD,SLOT(on_timeout()));
-    connect(timer,SIGNAL(timeout()),dialADSB,SLOT(on_timeout()));
 
     ui->frameControl1->stateChange(state_radar);
     ui->frameControl2->initParam(enable_mti,mti_value);
@@ -124,10 +119,6 @@ void MainWindow::trigger_shutdown()
 
     config.setValue("trail/enable",trail_settings.enable);
     config.setValue("trail/trail",trail_settings.trail);
-
-    config.setValue("adsb/show",adsb_settings.show);
-    config.setValue("adsb/ip",adsb_settings.ip);
-    config.setValue("adsb/port",adsb_settings.port);
 
     config.setValue("mti/enable",enable_mti);
     config.setValue("mti/threshold",mti_value);
@@ -313,11 +304,6 @@ void MainWindow::on_pushButtonSetGZ_clicked()
 void MainWindow::on_pushButtonSetTrail_clicked()
 {
     dialTrail->show();
-}
-
-void MainWindow::on_pushButtonSetADSB_clicked()
-{
-    dialADSB->show();
 }
 
 void MainWindow::on_pushButtonRadar_clicked()

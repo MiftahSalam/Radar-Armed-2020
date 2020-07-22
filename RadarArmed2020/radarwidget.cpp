@@ -19,11 +19,6 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri)
 
     arpa = new RA(this,ri);
 
-    adsb =  new ADSBManager(this,adsb_settings.ip,adsb_settings.port);
-//    adsb =  new ADSBManager(this,"192.168.1.170",10001);
-
-
-    qDebug()<<adsb_settings.ip<<adsb_settings.port;
     timer  = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(timeOut()));
     timer->start(100);
@@ -84,6 +79,27 @@ void RadarWidget::timeOut()
             {
                 pol = Pos2Polar(arpa->m_target[cur_arpa_id_count]->m_position,own_pos,curRange);
                 brn = SCALE_RAW_TO_DEGREES2048(pol.angle);
+                brn -= 270;
+                brn = radar_settings.headingUp ? brn+currentHeading : brn;
+                while(brn>360 || brn<0)
+                {
+                    if(brn>360)
+                        brn -= 360;
+                    if(brn<0)
+                        brn += 360;
+                }
+
+                double arpa_course = arpa->m_target[cur_arpa_id_count]->m_course;
+                arpa_course -= 270;
+                arpa_course = radar_settings.headingUp ? arpa_course+currentHeading : arpa_course;
+                while(arpa_course>360 || arpa_course<0)
+                {
+                    if(arpa_course>360)
+                        arpa_course -= 360;
+                    if(arpa_course<0)
+                        arpa_course += 360;
+                }
+
                 range = (double)curRange*pol.r/RETURNS_PER_LINE/1000;
 
                 /*
@@ -91,7 +107,7 @@ void RadarWidget::timeOut()
                 */
                 emit signal_target_param(arpa->m_target[cur_arpa_id_count]->m_target_id,
                                          arpa->m_target[cur_arpa_id_count]->m_speed_kn,
-                                         arpa->m_target[cur_arpa_id_count]->m_course,
+                                         arpa_course,
                                          range,
                                          brn
                                          );
@@ -103,51 +119,13 @@ void RadarWidget::timeOut()
             cur_arpa_id_count = 0;
     }
 
-    if(adsb->adsb_obj_map.size() > 0)
-    {
-        QHashIterator<QByteArray,ADSBObject> i(adsb->adsb_obj_map);
-        ADSBObject obj;
-        Position pos;
-//        double bearing = currentHeading;
-        double bearing = radar_settings.headingUp ?currentHeading : 0;
-//        bearing -= 90;
-
-        while(i.hasNext())
-        {
-            i.next();
-            obj = i.value();
-
-            pos.lat = obj.lat;
-            pos.lon = obj.lon;
-            pol = Pos2Polar(pos,own_pos,curRange);
-            brn = SCALE_RAW_TO_DEGREES2048(pol.angle)-bearing;
-            brn = brn >= 360 ? brn-360 : brn;
-            brn = brn < 0 ? 360+brn : brn;
-            range = (double)curRange*pol.r/RETURNS_PER_LINE/1000;
-
-            if(range < 96)
-                emit signal_adsb_param(QString(obj.icao.at(3)).toUpper(),obj.speed,obj.course,range,brn,obj.altitude);
-//                emit signal_adsb_param(QString::number(qrand() % 1),obj.speed,obj.course,range,brn,obj.altitude);
-        }
-    }
-
     if(old_motion_mode^radar_settings.headingUp)
     {
         arpa->DeleteAllTargets();
         old_motion_mode = radar_settings.headingUp;
     }
 
-    adsb_settings.connected = adsb->adsbReceive->isConnected();
-
     update();
-}
-void RadarWidget::trigger_ReqADSBSetting()
-{
-    adsb->adsbReceive->exitReq();
-    sleep(1);
-    adsb->adsbReceive->_addr = adsb_settings.ip;
-    adsb->adsbReceive->_port = adsb_settings.port;
-    adsb->adsbReceive->start();
 }
 
 void RadarWidget::paintEvent(QPaintEvent *event)
@@ -205,10 +183,16 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         QString text;
         for(int j=0;j<12;j++)
         {
-            if(j<9)
-                brn = (j*30)+90;
-            else
-                brn = (j*30)-270;
+            brn = (j*30)+180;
+            brn = brn == 360 ? 0 : brn;
+
+            while(brn>360 || brn<0)
+            {
+                if(brn>360)
+                    brn -= 360;
+                if(brn<0)
+                    brn += 360;
+            }
 
             QTextStream(&text)<<brn;
 
@@ -268,10 +252,10 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     if(radar_settings.show_heading_marker)
     {
         double baringan = radar_settings.headingUp ? 0 : currentHeading;
-        painter.rotate(baringan-90);
+        painter.rotate(baringan-180);
         painter.setPen(QColor(255,255,0,255));
         painter.drawLine(0,0,side,0);
-        painter.rotate(90-baringan);
+        painter.rotate(180-baringan);
 
     }
 
@@ -500,139 +484,6 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
         }
 
-    /*
-     * ADSB
-     **/
-    if(adsb->adsb_obj_map.size()>0 && adsb_settings.show)
-    {
-//        counter++;
-        int x1,x2,x3,x4,y1,y2,y3,y4/*,txtX,txtY*/;
-        QLine line1,line2,line3,line4;
-        QVector<QLine> lines;
-        QTextOption opt;
-        QFont font;
-
-        opt.setAlignment(Qt::AlignHCenter);
-        font.setPixelSize(15);
-        painter.setFont(font);
-
-        QString target_text;
-        QFontMetrics metric = QFontMetrics(font);
-        QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                          Qt::AlignCenter | Qt::TextWordWrap, target_text);
-
-        QPen pen(QColor(255,0,255,255));
-        pen.setWidth(2);
-        painter.setPen(pen);
-
-        QHashIterator<QByteArray,ADSBObject> i(adsb->adsb_obj_map);
-        ADSBObject obj;
-        double angle,range,crs,range_thrh;
-        int margin = 15;
-        Polar pol;
-        Position pos;
-        Position own_pos;
-
-//        double bearing = currentHeading;
-        double bearing = radar_settings.headingUp ? currentHeading : 0 ;
-//        bearing -= 90;
-        own_pos.lat = currentOwnShipLat;
-        own_pos.lon = currentOwnShipLon;
-
-        while(i.hasNext())
-        {
-            i.next();
-            obj = i.value();
-            if(((now-obj.time_tag) > 30000))
-            {
-                qDebug()<<"remove "<<obj.icao<<"delta time "<<now-obj.time_tag;
-                adsb->adsb_obj_map.remove(obj.icao);
-                continue;
-            }
-            pos.lat = obj.lat;
-            pos.lon = obj.lon;
-            pol = Pos2Polar(pos,own_pos,curRange);
-            angle = SCALE_RAW_TO_DEGREES2048(pol.angle)-bearing;
-            angle = angle >= 360 ? angle-360 : angle;
-            angle = angle < 0 ? 360+angle : angle;
-            range = side*pol.r/RETURNS_PER_LINE;
-            crs = obj.course+bearing;
-            crs = crs >= 360 ? crs-360 : crs;
-            crs = crs < 0 ? 360+crs : crs;
-            range_thrh = (double)curRange*pol.r/RETURNS_PER_LINE;
-
-            if(range_thrh < 50000)
-            {
-                x1 = range*qSin(deg2rad(angle));
-                y1 = -range*qCos(deg2rad(angle));
-
-                painter.drawPixmap(x1,y1,10,10,radarBlob);
-
-            }
-//            if(counter>200)
-//            {
-//            painter.drawPixmap(old_x1,old_y1,10,10,radarBlob2);
-//            }
-//            old_x1=x1;
-//            old_y1=y1;
-//            qDebug()<<angle;
-//            x1 = range*qCos(deg2rad(angle));
-//            y1 = range*qSin(deg2rad(angle));
-            /*
-            x1 = range*qSin(deg2rad(angle));
-            y1 = -range*qCos(deg2rad(angle));
-                    ;
-            x2 = x1+margin*qSin(deg2rad(crs));
-            x3 = x1+margin*qSin(deg2rad(crs+120));
-            x4 = x1+margin*qSin(deg2rad(crs+240));
-            y2 = y1-margin*qCos(deg2rad(crs));
-            y3 = y1-margin*qCos(deg2rad(crs+120));
-            y4 = y1-margin*qCos(deg2rad(crs+240));
-
-            line1 = QLine(x2,y2,x3,y3);
-            line2 = QLine(x3,y3,x1,y1);
-            line3 = QLine(x1,y1,x4,y4);
-            line4 = QLine(x4,y4,x2,y2);
-
-            lines.append(line1);
-            lines.append(line2);
-            lines.append(line3);
-            lines.append(line4);
-
-            font.setPixelSize(15);
-            painter.setFont(font);
-            pen.setColor(QColor(255,0,255,255));
-            pen.setWidth(2);
-            painter.setPen(pen);
-            painter.drawLines(lines);
-            pen.setColor(QColor(255,255,255,255));
-            pen.setWidth(2);
-            painter.setPen(pen);
-
-            target_text = QString(obj.icao).toUpper();
-            rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
-            pen.setWidth(1);
-            painter.setPen(pen);
-            painter.drawText(x1,y1,rect.width(), rect.height(),
-                             Qt::AlignCenter | Qt::TextWordWrap, target_text);
-
-
-            target_text = QString::number(obj.altitude,'f',1)+" ft";
-            rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
-            font.setPixelSize(10);
-            painter.setFont(font);
-            pen.setColor(QColor(255,0,0,255));
-            painter.setPen(pen);
-            painter.drawText(x1,y1+15,rect.width(), rect.height(),
-                             Qt::AlignCenter | Qt::TextWordWrap, target_text);
-            */
-
-        }
-    }
-
-
     painter.end();
 }
 
@@ -641,6 +492,8 @@ void RadarWidget::createMARPA(QPoint pos)
     qDebug()<<Q_FUNC_INFO<<pos;
 
     int side = qMin(region.width(), region.height())/2;
+//    int centerY = pos.x()-(width()/2)-this->x();
+//    int centerX = pos.y()-(height()/2)-this->y();
     int centerX = pos.x()-(width()/2)-this->x();
     int centerY = pos.y()-(height()/2)-this->y();
     QPoint center_pos = QPoint(centerX,-centerY);
@@ -755,7 +608,6 @@ void RadarWidget::setupViewport(int width, int height)
 }
 void RadarWidget::trigger_shutdown()
 {
-    adsb->adsbReceive->exitReq();
 }
 
 

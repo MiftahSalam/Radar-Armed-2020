@@ -24,12 +24,10 @@ SOURCES += main.cpp\
     framecursor.cpp \
     frameosd.cpp \
     frametrackdisplay.cpp \
-    frameadsb.cpp \
     radarwidget.cpp \
     gzdialog.cpp \
     dialogalarm.cpp \
     traildialog.cpp \
-    adsbdialog.cpp \
     dialogradar.cpp \
     qtmosq.cpp
 
@@ -40,13 +38,11 @@ HEADERS  += mainwindow.h \
     framecursor.h \
     frameosd.h \
     frametrackdisplay.h \
-    frameadsb.h \
     glwidget.h \
     radarwidget.h \
     gzdialog.h \
     dialogalarm.h \
     traildialog.h \
-    adsbdialog.h \
     dialogradar.h \
     qtmosq.h
 
@@ -57,11 +53,9 @@ FORMS    += mainwindow.ui \
     framecursor.ui \
     frameosd.ui \
     frametrackdisplay.ui \
-    frameadsb.ui \
     gzdialog.ui \
     dialogalarm.ui \
     traildialog.ui \
-    adsbdialog.ui \
     dialogradar.ui
 
 unix:!macx: LIBS += -L/usr/local/lib/ -lmosquittopp
