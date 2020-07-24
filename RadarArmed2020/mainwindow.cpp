@@ -17,8 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     range_from_radar = 0;
 
     rt = new radarTransmit(this);
-    ri = new RI(this);
-    radarWidget = new RadarWidget(centralWidget(),ri);
+    ri = new RI(this,0);
+    ri1 = new RI(this,1);
+    radarWidget = new RadarWidget(centralWidget(),ri,ri1);
     timer = new QTimer(this);
     dialogGz = new GZDialog(this);
     dialAlarm = new DialogAlarm(this);
@@ -32,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
 #else
     ri->receiveThread->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     ri->receiveThread->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
+    ri1->receiveThread->setMulticastData(radar_settings.ip_data,6687);
+    ri1->receiveThread->setMulticastReport(radar_settings.ip_report,6697);
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
     /*
 ip_data=236.6.7.103
@@ -42,7 +45,7 @@ ip_command=236.6.7.104
 port_command=6136*/
 #endif
     ri->receiveThread->start();
-
+    ri1->receiveThread->start();
 
     connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
             rt,SLOT(RadarStby()));
@@ -65,6 +68,13 @@ port_command=6136*/
     connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
     connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
     connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
+
+
+    connect(ri1,SIGNAL(signal_plotRadarSpoke(int,int,u_int8_t*,size_t)),
+            radarWidget,SLOT(trigger_DrawSpoke1(int,int,u_int8_t*,size_t)));
+//    connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
+//    connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
+//    connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
 
     connect(ui->frameTrackInf,SIGNAL(signal_request_del_track(int)),
             radarWidget,SLOT(trigger_ReqDelTrack(int)));
@@ -131,6 +141,7 @@ void MainWindow::trigger_shutdown()
     config.setValue("sensor/hdg_auto",hdg_auto);
 
     ri->receiveThread->exitReq();
+//    ri1->receiveThread->exitReq();
     radarWidget->trigger_shutdown();
     sleep(1);
     close();

@@ -10,12 +10,13 @@
 #define GL_MULTISAMPLE  0x809D
 #endif
 
-RadarWidget::RadarWidget(QWidget *parent, RI *ri)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),m_ri(ri)
+RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),m_ri(ri),m_ri1(ri1)
 {
 
     counter = 0;
     spokeDrawer = RD::make_Draw(m_ri,0);
+    spokeDrawer1 = RD::make_Draw(m_ri1,0);
 
     arpa = new RA(this,ri);
 
@@ -34,19 +35,6 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri)
     cur_arpa_id_count = 0;
     cur_arpa_number = 0;
     arpa_measure_time = QDateTime::currentMSecsSinceEpoch();
-
-    radarBlob = QPixmap(10,10);
-    radarBlob2 = QPixmap(10,10);
-    if(radarBlob.load(QDir::homePath()+"/.simrad/radar_blob.png"))
-        qDebug()<<"image loaded";
-    else
-        qDebug()<<"image not loaded";
-
-    if(radarBlob2.load(QDir::homePath()+"/.simrad/radar_blob2.png"))
-        qDebug()<<"image loaded";
-    else
-        qDebug()<<"image not loaded";
-
 
 }
 void RadarWidget::trigger_ReqDelTrack(int id)
@@ -100,10 +88,11 @@ void RadarWidget::timeOut()
                         arpa_course += 360;
                 }
 
+                /* untuk menghitung posisi yang sudah dikoreksi
                 range = (double)curRange*pol.r/RETURNS_PER_LINE/1000;
-
-                /*
-                qDebug()<<brn;
+                pol.angle = SCALE_DEGREES_TO_RAW2048(brn);
+                Position arpa_pos = Polar2Pos(pol,own_pos,curRange);
+                qDebug()<<arpa_pos.lat<<arpa_pos.lon;
                 */
                 emit signal_target_param(arpa->m_target[cur_arpa_id_count]->m_target_id,
                                          arpa->m_target[cur_arpa_id_count]->m_speed_kn,
@@ -150,6 +139,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     glScaled(1, 1, 1.);
 
     spokeDrawer->DrawRadarImage();
+    spokeDrawer1->DrawRadarImage();
 
     glShadeModel(GL_FLAT);
     glDisable(GL_DEPTH_TEST);
@@ -525,7 +515,14 @@ void RadarWidget::createMARPA(QPoint pos)
 }
 void RadarWidget::trigger_DrawSpoke(int transparency, int angle, u_int8_t *data, size_t len)
 {
+//    qDebug()<<Q_FUNC_INFO<<angle;
     spokeDrawer->ProcessRadarSpoke(transparency,angle,data,len);
+    update();
+}
+void RadarWidget::trigger_DrawSpoke1(int transparency, int angle, u_int8_t *data, size_t len)
+{
+//    qDebug()<<Q_FUNC_INFO<<angle;
+    spokeDrawer1->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }
 void RadarWidget::setRange(int range)

@@ -14,7 +14,7 @@ class RadarWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    RadarWidget(QWidget *parent = 0,RI *ri = 0);
+    RadarWidget(QWidget *parent = 0, RI *ri = 0, RI *ri1=0);
     ~RadarWidget();
 
     void setRectRegoin(QRect rect);
@@ -39,6 +39,7 @@ protected:
 private slots:
     void timeOut();
     void trigger_DrawSpoke(int transparency, int angle, u_int8_t* data, size_t len);
+    void trigger_DrawSpoke1(int transparency, int angle, u_int8_t* data, size_t len);
     void trigger_ReqDelTrack(int id);
 
 private:
@@ -46,13 +47,12 @@ private:
     void createMARPA(QPoint pos);
 
     RD *spokeDrawer;
+    RD *spokeDrawer1;
     RI *m_ri;
+    RI *m_ri1;
     RA *arpa;
-//    qtmosq *mqtt;
     QTimer *timer;
     QRect region;
-    QPixmap radarBlob;
-    QPixmap radarBlob2;
 
     double ringWidth;
     int curRange;

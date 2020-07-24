@@ -23,6 +23,7 @@ public:
     ~MainWindow();
 
     RI *ri;
+    RI *ri1;
 
 protected:
     void resizeEvent(QResizeEvent *);
