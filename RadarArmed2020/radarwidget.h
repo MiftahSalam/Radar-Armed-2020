@@ -51,6 +51,7 @@ private:
     RI *m_ri;
     RI *m_ri1;
     RA *arpa;
+    RA *arpa1;
     QTimer *timer;
     QRect region;
 
@@ -59,6 +60,7 @@ private:
     int cur_arpa_id_count;
     int cur_arpa_number;
     quint64 arpa_measure_time;
+    quint64 arpa_measure_time1;
     bool old_motion_mode;
 
     int old_x1;

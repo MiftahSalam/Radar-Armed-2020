@@ -19,6 +19,7 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     spokeDrawer1 = RD::make_Draw(m_ri1,0);
 
     arpa = new RA(this,ri);
+    arpa1 = new RA(this,ri1);
 
     timer  = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(timeOut()));
@@ -309,6 +310,13 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             arpa->RefreshArpaTargets();
 
     }
+    if(TIMED_OUT(now,arpa_measure_time1+200))
+    {
+        arpa_measure_time1 = now;
+        if(arpa1->m_number_of_targets>0)
+            arpa1->RefreshArpaTargets();
+
+    }
     /* test draw arpa
     QLine line1 = QLine(90,-424,92,-436);
     QLine line2 = QLine(92,-436,-7,-445);
@@ -385,6 +393,81 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             painter.drawLines(lines);
 
             target_text = QString::number(arpa->m_target[i]->m_target_id);
+            rect = metric.boundingRect(0,0,side, int(side*0.125),
+                                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
+            txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
+            txtY = y1 - (rect.height()*qSin(deg2rad(a_min/2))) -5;
+
+            pen.setWidth(1);
+            painter.setPen(pen);
+            painter.drawText(txtX,txtY,rect.width(), rect.height(),
+                             Qt::AlignCenter | Qt::TextWordWrap, target_text);
+        }
+    }
+    if(arpa1->m_number_of_targets>0 && arpa_settings.show)
+    {
+        int x1,x2,x3,x4,y1,y2,y3,y4,txtX,txtY;
+        QLine line1,line2,line3,line4;
+        QVector<QLine> lines;
+        QTextOption opt;
+        QFont font;
+
+        opt.setAlignment(Qt::AlignHCenter);
+        font.setPixelSize(15);
+        painter.setFont(font);
+
+        QString target_text;
+        QFontMetrics metric = QFontMetrics(font);
+        QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
+                                          Qt::AlignCenter | Qt::TextWordWrap, target_text);
+
+        QPen pen(QColor(255,0,255,255));
+        pen.setWidth(2);
+        painter.setPen(pen);
+
+        for(int i = 0;i<arpa1->m_number_of_targets;i++)
+        {
+            /*
+            int a_min = MOD_ROTATION2048(arpa->m_target[i]->m_min_angle.angle); //337
+            a_min = SCALE_RAW_TO_DEGREES2048(a_min)+1;
+            int a_max = MOD_ROTATION2048(arpa->m_target[i]->m_max_angle.angle); //363
+            a_max = SCALE_RAW_TO_DEGREES2048(a_max);
+            int r_min = 2*side*arpa->m_target[i]->m_min_r.r/RETURNS_PER_LINE;
+            int r_max = 2*side*arpa->m_target[i]->m_max_r.r/RETURNS_PER_LINE;
+            r_max += 5;
+            */
+            int a_max = MOD_ROTATION2048(arpa1->m_target[i]->m_max_angle_future.angle); //363
+            a_max = SCALE_RAW_TO_DEGREES2048(a_max);
+            int a_min = MOD_ROTATION2048(arpa1->m_target[i]->m_min_angle_future.angle); //337
+            a_min = SCALE_RAW_TO_DEGREES2048(a_min)+1;
+            int r_min = 2*side*arpa1->m_target[i]->m_min_r_future.r/RETURNS_PER_LINE;
+            int r_max = 2*side*arpa1->m_target[i]->m_max_r_future.r/RETURNS_PER_LINE;
+            r_max += 5;
+
+            x1 = r_min*qSin(deg2rad(a_min));
+            x2 = r_max*qSin(deg2rad(a_min));
+            x3 = r_min*qSin(deg2rad(a_max));
+            x4 = r_max*qSin(deg2rad(a_max));
+            y1 = -r_min*qCos(deg2rad(a_min));
+            y2 = -r_max*qCos(deg2rad(a_min));
+            y3 = -r_min*qCos(deg2rad(a_max));
+            y4 = -r_max*qCos(deg2rad(a_max));
+
+            line1 = QLine(x1,y1,x2,y2);
+            line2 = QLine(x2,y2,x4,y4);
+            line3 = QLine(x4,y4,x3,y3);
+            line4 = QLine(x3,y3,x1,y1);
+
+            lines.append(line1);
+            lines.append(line2);
+            lines.append(line3);
+            lines.append(line4);
+
+            pen.setWidth(2);
+            painter.setPen(pen);
+            painter.drawLines(lines);
+
+            target_text = QString::number(arpa1->m_target[i]->m_target_id);
             rect = metric.boundingRect(0,0,side, int(side*0.125),
                                               Qt::AlignCenter | Qt::TextWordWrap, target_text);
             txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
@@ -512,6 +595,8 @@ void RadarWidget::createMARPA(QPoint pos)
     Position target_pos = Polar2Pos(pol,own_pos,curRange);
     qDebug()<<Q_FUNC_INFO<<target_pos.lat<<target_pos.lon;
     arpa->AcquireNewMARPATarget(target_pos);
+
+    arpa1->AcquireNewMARPATarget(target_pos);
 }
 void RadarWidget::trigger_DrawSpoke(int transparency, int angle, u_int8_t *data, size_t len)
 {
@@ -529,6 +614,7 @@ void RadarWidget::setRange(int range)
 {
     curRange = range;
     arpa->range_meters = 2*range;
+    arpa1->range_meters = 2*range;
     computetRingWidth();
 }
 void RadarWidget::computetRingWidth()
