@@ -36,6 +36,7 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     cur_arpa_id_count = 0;
     cur_arpa_number = 0;
     arpa_measure_time = QDateTime::currentMSecsSinceEpoch();
+    arpa_measure_time1 = arpa_measure_time;
 
 }
 void RadarWidget::trigger_ReqDelTrack(int id)
@@ -310,6 +311,8 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             arpa->RefreshArpaTargets();
 
     }
+    /*
+    */
     if(TIMED_OUT(now,arpa_measure_time1+200))
     {
         arpa_measure_time1 = now;
@@ -404,6 +407,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
         }
     }
+
     if(arpa1->m_number_of_targets>0 && arpa_settings.show)
     {
         int x1,x2,x3,x4,y1,y2,y3,y4,txtX,txtY;
@@ -427,15 +431,6 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
         for(int i = 0;i<arpa1->m_number_of_targets;i++)
         {
-            /*
-            int a_min = MOD_ROTATION2048(arpa->m_target[i]->m_min_angle.angle); //337
-            a_min = SCALE_RAW_TO_DEGREES2048(a_min)+1;
-            int a_max = MOD_ROTATION2048(arpa->m_target[i]->m_max_angle.angle); //363
-            a_max = SCALE_RAW_TO_DEGREES2048(a_max);
-            int r_min = 2*side*arpa->m_target[i]->m_min_r.r/RETURNS_PER_LINE;
-            int r_max = 2*side*arpa->m_target[i]->m_max_r.r/RETURNS_PER_LINE;
-            r_max += 5;
-            */
             int a_max = MOD_ROTATION2048(arpa1->m_target[i]->m_max_angle_future.angle); //363
             a_max = SCALE_RAW_TO_DEGREES2048(a_max);
             int a_min = MOD_ROTATION2048(arpa1->m_target[i]->m_min_angle_future.angle); //337
