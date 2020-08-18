@@ -3,8 +3,8 @@
 
 #include "QObject"
 
-#include "mosquittopp.h"
-#include "mosquitto.h"
+#include <mosquittopp.h>
+#include <mosquitto.h>
 
 
 using namespace mosqpp;

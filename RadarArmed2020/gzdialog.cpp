@@ -1,6 +1,6 @@
 #include "gzdialog.h"
 #include "ui_gzdialog.h"
-#include <radar-engine-armed/radarengine_global.h>
+#include <radarengine_global.h>
 
 GZDialog::GZDialog(QWidget *parent) :
     QDialog(parent),

@@ -1,6 +1,6 @@
 #include "dialogalarm.h"
 #include "ui_dialogalarm.h"
-#include <radar-engine-armed/radarengine_global.h>
+#include <radarengine_global.h>
 
 #include <QDateTime>
 

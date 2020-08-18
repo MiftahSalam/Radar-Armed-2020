@@ -4,8 +4,8 @@
 #include <QGLWidget>
 #include <QTimer>
 
-#include <radar-engine-armed/radarengine_global.h>
-#include <radar-engine-armed/radarengine.h>
+#include <radarengine_global.h>
+#include <radarengine.h>
 //#include "qtmosq.h"
 
 
@@ -38,8 +38,8 @@ protected:
 
 private slots:
     void timeOut();
-    void trigger_DrawSpoke(int transparency, int angle, u_int8_t* data, size_t len);
-    void trigger_DrawSpoke1(int transparency, int angle, u_int8_t* data, size_t len);
+    void trigger_DrawSpoke(int transparency, int angle, UINT8* data, size_t len);
+    void trigger_DrawSpoke1(int transparency, int angle, UINT8* data, size_t len);
     void trigger_ReqDelTrack(int id);
 
 private:

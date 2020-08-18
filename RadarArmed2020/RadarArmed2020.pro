@@ -58,15 +58,35 @@ FORMS    += mainwindow.ui \
     traildialog.ui \
     dialogradar.ui
 
-unix:!macx: LIBS += -L/usr/local/lib/ -lmosquittopp
+win32 {
+    CONFIG += c++11 console
+    message(Building for Windows)
+    LIBS+= -lOpenGL32
 
-INCLUDEPATH += /usr/local/include
-DEPENDPATH += /usr/local/include
+    LIBS += -LC:\Users\WLR_Engine\ -lradarengine-armed
+    INCLUDEPATH += C:\Users\WLR_Engine
+    DEPENDPATH += C:\Users\WLR_Engine
 
+    LIBS += -L'C:/Program Files (x86)/mosquitto/devel/' -lmosquittopp
+    INCLUDEPATH += 'C:/Program Files (x86)/mosquitto/devel'
+    DEPENDPATH += 'C:/Program Files (x86)/mosquitto/devel'
+    PRE_TARGETDEPS += 'C:/Program Files (x86)/mosquitto/devel/mosquittopp.lib'
 
-unix:!macx: LIBS += -L/usr/lib/ -lradarengine-armed
+}
+else:unix {
+    message(Building for Linux)
+    LIBS += -L/usr/local/lib/ -lmosquittopp
 
-INCLUDEPATH += /usr/include/radar-engine-armed
-DEPENDPATH += /usr/include/radar-engine-armed
+    INCLUDEPATH += /usr/local/include
+    DEPENDPATH += /usr/local/include
 
-unix:!macx: PRE_TARGETDEPS += /usr/lib/libradarengine-armed.a
+    LIBS += -L/usr/lib/ -lradarengine-armed
+
+    INCLUDEPATH += /usr/include/radar-engine-armed
+    DEPENDPATH += /usr/include/radar-engine-armed
+
+    PRE_TARGETDEPS += /usr/lib/libradarengine-armed.a
+}
+else {
+      message("Unknown configuration")
+}

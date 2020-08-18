@@ -67,9 +67,10 @@ int main(int argc, char *argv[])
 
     enable_mti = config.value("mti/enable",true).toBool();
     mti_value = config.value("mti/threshold",100).toInt();
+    qDebug()<<"gz_settings.confirmed<<gz_settings.time";
 
     MainWindow w;
-    w.showFullScreen();
+    w.show();
     
     return a.exec();
 

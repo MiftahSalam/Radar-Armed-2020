@@ -1,6 +1,6 @@
 #include "framecontrol1.h"
 #include "ui_framecontrol1.h"
-#include <radar-engine-armed/radarengine_global.h>
+#include <radarengine_global.h>
 
 FrameControl1::FrameControl1(QWidget *parent) :
     QFrame(parent),

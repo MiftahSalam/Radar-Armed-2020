@@ -1,8 +1,12 @@
 #include <QtGui>
 #include <QtOpenGL>
+#include <QtGlobal>
 #include <stdlib.h>
 #include <math.h>
+
+#ifdef Q_OS_LINUX
 #include <unistd.h>
+#endif
 
 #include "radarwidget.h"
 
@@ -593,13 +597,13 @@ void RadarWidget::createMARPA(QPoint pos)
 
     arpa1->AcquireNewMARPATarget(target_pos);
 }
-void RadarWidget::trigger_DrawSpoke(int transparency, int angle, u_int8_t *data, size_t len)
+void RadarWidget::trigger_DrawSpoke(int transparency, int angle, UINT8 *data, size_t len)
 {
 //    qDebug()<<Q_FUNC_INFO<<angle;
     spokeDrawer->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }
-void RadarWidget::trigger_DrawSpoke1(int transparency, int angle, u_int8_t *data, size_t len)
+void RadarWidget::trigger_DrawSpoke1(int transparency, int angle, UINT8 *data, size_t len)
 {
 //    qDebug()<<Q_FUNC_INFO<<angle;
     spokeDrawer1->ProcessRadarSpoke(transparency,angle,data,len);

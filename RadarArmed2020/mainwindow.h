@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-#include <radar-engine-armed/radarengine.h>
+#include <radarengine.h>
 #include "radarwidget.h"
 #include "gzdialog.h"
 #include "dialogalarm.h"
@@ -26,7 +26,7 @@ public:
     RI *ri1;
 
 protected:
-    void resizeEvent(QResizeEvent *);
+    void resizeEvent(QResizeEvent *event);
 
 private slots:
     void trigger_rangeChange(int range);

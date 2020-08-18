@@ -1,6 +1,6 @@
 #include "frameosd.h"
 #include "ui_frameosd.h"
-#include <radar-engine-armed/radarengine_global.h>
+#include <radarengine_global.h>
 
 #include <QTime>
 

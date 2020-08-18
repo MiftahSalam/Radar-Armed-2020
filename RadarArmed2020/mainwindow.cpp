@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <radar-engine-armed/radarengine_global.h>
+#include <radarengine_global.h>
 
 #include <QDebug>
+#ifdef Q_OS_LINUX
 #include <unistd.h>
+#endif
 
 //#define LOCALHOST
 
@@ -143,7 +145,12 @@ void MainWindow::trigger_shutdown()
     ri->receiveThread->exitReq();
 //    ri1->receiveThread->exitReq();
     radarWidget->trigger_shutdown();
+#ifdef Q_OS_LINUX
     sleep(1);
+#elif defined (Q_OS_WIN32)
+    Sleep(1000);
+#endif
+
     close();
 }
 
@@ -278,8 +285,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::resizeEvent(QResizeEvent *)
+void MainWindow::resizeEvent(QResizeEvent *event)
 {    
+    qDebug()<<event->size();
     ui->frameRight->move(width()-ui->frameRight->width(),0);
     ui->frameRight->resize(ui->frameRight->width(),height());
 
