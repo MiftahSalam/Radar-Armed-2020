@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    setWindowTitle("WLR Display");
     curRange = radar_settings.last_scale;
     range_from_radar = 0;
 
@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #else
     ri->receiveThread->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     ri->receiveThread->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
-    ri1->receiveThread->setMulticastData(radar_settings.ip_data,6687);
+    ri1->receiveThread->setMulticastData("236.6.7.99",6687);
     ri1->receiveThread->setMulticastReport(radar_settings.ip_report,6697);
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
     /*
@@ -65,15 +65,15 @@ port_command=6136*/
     connect(ui->frameControl2,SIGNAL(signal_change_sea_req(int)),
             this,SLOT(trigger_seaChange(int)));
 
-    connect(ri,SIGNAL(signal_plotRadarSpoke(int,int,u_int8_t*,size_t)),
-            radarWidget,SLOT(trigger_DrawSpoke(int,int,u_int8_t*,size_t)));
+    connect(ri,&RI::signal_plotRadarSpoke,
+            radarWidget,&RadarWidget::trigger_DrawSpoke);
     connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
     connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
     connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
 
 
-    connect(ri1,SIGNAL(signal_plotRadarSpoke(int,int,u_int8_t*,size_t)),
-            radarWidget,SLOT(trigger_DrawSpoke1(int,int,u_int8_t*,size_t)));
+    connect(ri1,&RI::signal_plotRadarSpoke,
+            radarWidget,&RadarWidget::trigger_DrawSpoke1);
 //    connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
 //    connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
 //    connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));

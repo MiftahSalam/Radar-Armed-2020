@@ -36,7 +36,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
 
-private slots:
+public slots:
     void timeOut();
     void trigger_DrawSpoke(int transparency, int angle, UINT8* data, size_t len);
     void trigger_DrawSpoke1(int transparency, int angle, UINT8* data, size_t len);
