@@ -59,7 +59,7 @@ FORMS    += mainwindow.ui \
     dialogradar.ui
 
 win32 {
-    CONFIG += c++11 console
+#    CONFIG += c++11 console
     message(Building for Windows)
     LIBS+= -lOpenGL32
 
@@ -90,3 +90,6 @@ else:unix {
 else {
       message("Unknown configuration")
 }
+
+RESOURCES += \
+    resource.qrc

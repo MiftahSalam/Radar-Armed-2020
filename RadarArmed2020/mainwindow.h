@@ -52,7 +52,7 @@ private:
     TrailDialog *dialTrail;
     DialogRadar *dialRadar;
     RadarWidget *radarWidget;
-    radarTransmit *rt;
+    radarTransmit *rt,*rt1;
     QTimer *timer;
 
     int curRange;

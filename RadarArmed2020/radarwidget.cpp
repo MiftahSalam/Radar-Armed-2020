@@ -94,8 +94,8 @@ void RadarWidget::timeOut()
                         arpa_course += 360;
                 }
 
+                range = static_cast<double>(curRange*pol.r/RETURNS_PER_LINE)/1000.;
                 /* untuk menghitung posisi yang sudah dikoreksi
-                range = (double)curRange*pol.r/RETURNS_PER_LINE/1000;
                 pol.angle = SCALE_DEGREES_TO_RAW2048(brn);
                 Position arpa_pos = Polar2Pos(pol,own_pos,curRange);
                 qDebug()<<arpa_pos.lat<<arpa_pos.lon;
@@ -300,7 +300,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
         QFontMetrics metric = QFontMetrics(font);
         QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                          Qt::AlignCenter | Qt::TextWordWrap, text);
+                                         Qt::AlignCenter | Qt::TextWordWrap, text);
 
         painter.setPen(QColor(0,255,0,255));
         painter.drawText(-rect.width()/2,5,rect.width(), rect.height(),Qt::AlignCenter | Qt::TextWordWrap, text);
@@ -351,7 +351,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         QString target_text;
         QFontMetrics metric = QFontMetrics(font);
         QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                          Qt::AlignCenter | Qt::TextWordWrap, target_text);
+                                         Qt::AlignCenter | Qt::TextWordWrap, target_text);
 
         QPen pen(QColor(255,255,255,255));
         pen.setWidth(2);
@@ -401,7 +401,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
             target_text = QString::number(arpa->m_target[i]->m_target_id);
             rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
+                                       Qt::AlignCenter | Qt::TextWordWrap, target_text);
             txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
             txtY = y1 - (rect.height()*qSin(deg2rad(a_min/2))) -5;
 
@@ -427,7 +427,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         QString target_text;
         QFontMetrics metric = QFontMetrics(font);
         QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                          Qt::AlignCenter | Qt::TextWordWrap, target_text);
+                                         Qt::AlignCenter | Qt::TextWordWrap, target_text);
 
         QPen pen(QColor(255,0,255,255));
         pen.setWidth(2);
@@ -468,7 +468,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
             target_text = QString::number(arpa1->m_target[i]->m_target_id);
             rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                              Qt::AlignCenter | Qt::TextWordWrap, target_text);
+                                       Qt::AlignCenter | Qt::TextWordWrap, target_text);
             txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
             txtY = y1 - (rect.height()*qSin(deg2rad(a_min/2))) -5;
 
@@ -482,64 +482,76 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     /*
      * Guardzone
      */
-    if(gz_settings.show)
+
+    double bearing = radar_settings.headingUp ? 0 : currentHeading;
+    painter.rotate(bearing-180);
+    for(int gz_i=0; gz_i<3; gz_i++)
+    {
+        GZSettings gz_sett = gz_settings[gz_i];
+        if(gz_sett.show)
         {
-            QPen pen(QColor(0,255,0,255));
+            QPen pen(Qt::yellow);
             pen.setWidth(2);
             painter.setPen(pen);
 
-            //
-//            double bearing = currentHeading;
-            double bearing = radar_settings.headingUp ? 0 : currentHeading;
-//            double bearing = 0;
-            int inner_range_pix = (int)((double)side*(gz_settings.inner_range/(curRange)));
-            int outer_range_pix = (int)((double)side*(gz_settings.outer_range/(curRange)));
+            bearing = radar_settings.headingUp ? 0 : currentHeading;
+            int inner_range_pix = static_cast<int>(static_cast<double>(side)
+                                                   *(gz_sett.inner_range/static_cast<double>(curRange)));
+            int outer_range_pix = static_cast<int>(static_cast<double>(side)
+                                                   *(gz_sett.outer_range/static_cast<double>(curRange)));
 
             QRect rectangle;
 
-            if(!gz_settings.circle_type)
+            if(!gz_sett.circle_type)
             {
-                int inner_start_x = inner_range_pix*qSin(deg2rad(bearing+gz_settings.start_bearing));
-                int inner_start_y = -inner_range_pix*qCos(deg2rad(bearing+gz_settings.start_bearing));
-                int outter_start_x = outer_range_pix*qSin(deg2rad(bearing+gz_settings.start_bearing));
-                int outter_start_y = -outer_range_pix*qCos(deg2rad(bearing+gz_settings.start_bearing));
-                int inner_end_x = inner_range_pix*qSin(deg2rad(bearing+gz_settings.end_bearing));
-                int inner_end_y = -inner_range_pix*qCos(deg2rad(bearing+gz_settings.end_bearing));
-                int outter_end_x = outer_range_pix*qSin(deg2rad(bearing+gz_settings.end_bearing));
-                int outter_end_y = -outer_range_pix*qCos(deg2rad(bearing+gz_settings.end_bearing));
+                int inner_start_x = static_cast<int>(static_cast<double>(inner_range_pix)*
+                        qSin(deg2rad(90-bearing+gz_sett.start_bearing)));
+                int inner_start_y = static_cast<int>(static_cast<double>(-inner_range_pix)*
+                        qCos(deg2rad(90-bearing+gz_sett.start_bearing)));
+                int outter_start_x = static_cast<int>(static_cast<double>(outer_range_pix)*
+                        qSin(deg2rad(90-bearing+gz_sett.start_bearing)));
+                int outter_start_y = static_cast<int>(static_cast<double>(-outer_range_pix)*
+                        qCos(deg2rad(90-bearing+gz_sett.start_bearing)));
+                int inner_end_x = static_cast<int>(static_cast<double>(inner_range_pix)*
+                        qSin(deg2rad(90-bearing+gz_sett.end_bearing)));
+                int inner_end_y = static_cast<int>(static_cast<double>(-inner_range_pix)*
+                        qCos(deg2rad(90-bearing+gz_sett.end_bearing)));
+                int outter_end_x = static_cast<int>(static_cast<double>(outer_range_pix)*
+                        qSin(deg2rad(90-bearing+gz_sett.end_bearing)));
+                int outter_end_y = static_cast<int>(static_cast<double>(-outer_range_pix)*
+                        qCos(deg2rad(90-bearing+gz_sett.end_bearing)));
                 int startAngle;
                 int spanAngle;
 
-        //        qDebug()<<inner_range_pix<<outer_range_pix<<side<<gz_settings.inner_range<<gz_settings.outer_range<<curRange;
+                //        qDebug()<<inner_range_pix<<outer_range_pix<<side<<gz_sett.inner_range<<gz_sett.outer_range<<curRange;
                 painter.drawLine(inner_start_x,inner_start_y,outter_start_x,outter_start_y);
                 painter.drawLine(inner_end_x,inner_end_y,outter_end_x,outter_end_y);
 
-                if(gz_settings.start_bearing<gz_settings.end_bearing)
+                if(gz_sett.start_bearing<gz_sett.end_bearing)
                 {
                     rectangle = QRect(-inner_range_pix, -inner_range_pix, 2*inner_range_pix, 2*inner_range_pix);
-                    startAngle = (90-(bearing+gz_settings.end_bearing)) * 16;
-                    spanAngle = (gz_settings.end_bearing-gz_settings.start_bearing) * 16;
-
+                    startAngle = static_cast<int>((-(bearing+gz_sett.end_bearing)) * 16.);
+                    spanAngle = static_cast<int>((gz_sett.end_bearing-gz_sett.start_bearing) * 16.);
 
                     painter.drawArc(rectangle, startAngle, spanAngle);
 
                     rectangle = QRect(-outer_range_pix, -outer_range_pix, 2*outer_range_pix, 2*outer_range_pix);
-                    startAngle = (90-(bearing+gz_settings.end_bearing)) * 16;
-                    spanAngle = (gz_settings.end_bearing-gz_settings.start_bearing) * 16;
+                    startAngle = static_cast<int>((-(bearing+gz_sett.end_bearing)) * 16.);
+                    spanAngle = static_cast<int>((gz_sett.end_bearing-gz_sett.start_bearing) * 16.);
 
                     painter.drawArc(rectangle, startAngle, spanAngle);
-                }
+                 }
                 else
                 {
                     rectangle = QRect(-inner_range_pix, -inner_range_pix, 2*inner_range_pix, 2*inner_range_pix);
-                    startAngle = (90-(bearing+gz_settings.end_bearing)) * 16;
-                    spanAngle = (gz_settings.end_bearing-gz_settings.start_bearing+360) * 16;
+                    startAngle = static_cast<int>((-(bearing+gz_sett.end_bearing)) * 16);
+                    spanAngle = static_cast<int>((gz_sett.end_bearing-gz_sett.start_bearing+360) * 16);
 
                     painter.drawArc(rectangle, startAngle, spanAngle);
 
                     rectangle = QRect(-outer_range_pix, -outer_range_pix, 2*outer_range_pix, 2*outer_range_pix);
-                    startAngle = (90-(bearing+gz_settings.end_bearing)) * 16;
-                    spanAngle = (gz_settings.end_bearing-gz_settings.start_bearing+360) * 16;
+                    startAngle = static_cast<int>((90-(bearing+gz_sett.end_bearing)) * 16);
+                    spanAngle = static_cast<int>((gz_sett.end_bearing-gz_sett.start_bearing+360) * 16);
 
                     painter.drawArc(rectangle, startAngle, spanAngle);
 
@@ -553,8 +565,9 @@ void RadarWidget::paintEvent(QPaintEvent *event)
                 rectangle = QRect(-outer_range_pix, -outer_range_pix, 2*outer_range_pix, 2*outer_range_pix);
                 painter.drawEllipse(rectangle);
             }
-
         }
+    }
+    painter.rotate(-bearing+180);
 
     painter.end();
 }
@@ -564,27 +577,27 @@ void RadarWidget::createMARPA(QPoint pos)
     qDebug()<<Q_FUNC_INFO<<pos;
 
     int side = qMin(region.width(), region.height())/2;
-//    int centerY = pos.x()-(width()/2)-this->x();
-//    int centerX = pos.y()-(height()/2)-this->y();
+    //    int centerY = pos.x()-(width()/2)-this->x();
+    //    int centerX = pos.y()-(height()/2)-this->y();
     int centerX = pos.x()-(width()/2)-this->x();
     int centerY = pos.y()-(height()/2)-this->y();
-    QPoint center_pos = QPoint(centerX,-centerY);
+    QPoint center_pos = QPoint(-centerY,-centerX);
     Polar pol;
-    double deg = MOD_DEGREES(rad2deg(atan2(center_pos.x(),center_pos.y())));
+    double deg = MOD_DEGREES(rad2deg(atan2(-center_pos.y(),center_pos.x())));
     double range_scale = sqrt(pow(center_pos.x(),2)+pow(center_pos.y(),2))/side;
     pol.angle = SCALE_DEGREES_TO_RAW2048(deg);
     pol.r = range_scale*RETURNS_PER_LINE;
     qDebug()<<Q_FUNC_INFO<<"mouse pos"<<center_pos
            <<"polar angle"<<pol.angle
           <<"polar range"<<pol.r
-        <<"side"<<side
-       <<"range meter"<<range_scale*2*curRange
-      <<"radar meter"<<2*curRange
-     <<"degree"<<deg;
+         <<"side"<<side
+        <<"range meter"<<range_scale*2*curRange
+       <<"radar meter"<<2*curRange
+      <<"degree"<<deg;
     if (pol.r >= RETURNS_PER_LINE || pol.r <= 0)
     {
         qDebug()<<"out of avail area";
-//        emit warning_MARPA_out_of_area();
+        //        emit warning_MARPA_out_of_area();
         return;
     }
 
@@ -593,21 +606,21 @@ void RadarWidget::createMARPA(QPoint pos)
     own_pos.lon = currentOwnShipLon;
     Position target_pos = Polar2Pos(pol,own_pos,curRange);
     qDebug()<<Q_FUNC_INFO<<target_pos.lat<<target_pos.lon;
-    arpa->AcquireNewMARPATarget(target_pos);
 
+    arpa->AcquireNewMARPATarget(target_pos);
     arpa1->AcquireNewMARPATarget(target_pos);
 }
 void RadarWidget::trigger_DrawSpoke(int transparency, int angle, UINT8 *data, size_t len)
 {
-//    if(data[0] > 0)
-//    qDebug()<<Q_FUNC_INFO<<angle;
+    //    if(data[0] > 0)
+    //    qDebug()<<Q_FUNC_INFO<<angle;
     spokeDrawer->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }
 void RadarWidget::trigger_DrawSpoke1(int transparency, int angle, UINT8 *data, size_t len)
 {
-//    if(data[0] > 0)
-//    qDebug()<<Q_FUNC_INFO<<angle;
+    //    if(data[0] > 0)
+    //    qDebug()<<Q_FUNC_INFO<<angle;
     spokeDrawer1->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }
@@ -654,6 +667,7 @@ void RadarWidget::initializeGL()
 
 void RadarWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+//    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
     if(event->button()==Qt::LeftButton && arpa_settings.create_arpa_by_click)
         createMARPA(event->globalPos());
 }
@@ -673,7 +687,7 @@ void RadarWidget::mouseMoveEvent(QMouseEvent *event)
 
     double range = sqrt(pow(range_pixel_y,2)+pow(range_pixel_x,2)); //pixel
     range = range*(double)curRange/(double)side/1000;
-//    qDebug()<<Q_FUNC_INFO<<range<<bearing<<mouse_pos<<side;
+    //    qDebug()<<Q_FUNC_INFO<<range<<bearing<<mouse_pos<<side;
     emit signal_cursorMove(range,bearing);
 }
 void RadarWidget::setupViewport(int width, int height)

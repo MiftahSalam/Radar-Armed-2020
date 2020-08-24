@@ -56,7 +56,7 @@ qtmosq *getMQTT()
 {
     if(!mqtt)
     {
-        QSettings config(QDir::homePath()+"/.simrad/radar.conf",QSettings::IniFormat);
+        QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
         QString id = config.value("mqtt/id",false).toString();
         QString ip = config.value("mqtt/ip",false).toString();

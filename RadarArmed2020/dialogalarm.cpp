@@ -22,6 +22,6 @@ void DialogAlarm::setSpotCount(int count)
 
 void DialogAlarm::on_pushButton_clicked()
 {
-    gz_settings.confirmed = true;
-    gz_settings.time = QDateTime::currentMSecsSinceEpoch()+gz_settings.timeout;
+    gz_settings[0].confirmed = true;
+    gz_settings[0].time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch())+gz_settings[0].timeout;
 }

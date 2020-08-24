@@ -6,7 +6,6 @@
 #include <mosquittopp.h>
 #include <mosquitto.h>
 
-
 using namespace mosqpp;
 
 class qtmosq : public QObject, public mosquittopp

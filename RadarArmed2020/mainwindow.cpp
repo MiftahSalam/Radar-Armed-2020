@@ -15,10 +15,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("WLR Display");
+
     curRange = radar_settings.last_scale;
     range_from_radar = 0;
 
     rt = new radarTransmit(this);
+    rt1 = new radarTransmit(this);
     ri = new RI(this,0);
     ri1 = new RI(this,1);
     radarWidget = new RadarWidget(centralWidget(),ri,ri1);
@@ -35,9 +37,10 @@ MainWindow::MainWindow(QWidget *parent) :
 #else
     ri->receiveThread->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     ri->receiveThread->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
-    ri1->receiveThread->setMulticastData("236.6.7.99",6687);
-    ri1->receiveThread->setMulticastReport(radar_settings.ip_report,6697);
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
+    ri1->receiveThread->setMulticastData("127.0.0.1",6687);
+    ri1->receiveThread->setMulticastReport(radar_settings.ip_report,6697);
+    rt1->setMulticastData(radar_settings.ip_command,6679);
     /*
 ip_data=236.6.7.103
 port_data=6135
@@ -53,6 +56,10 @@ port_command=6136*/
             rt,SLOT(RadarStby()));
     connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
             rt,SLOT(RadarTx()));
+    connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
+            rt1,SLOT(RadarStby()));
+    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
+            rt1,SLOT(RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_shutdown()),
             this,SLOT(trigger_shutdown()));
     connect(ui->frameControl1,SIGNAL(signal_req_range(int)),
@@ -71,12 +78,11 @@ port_command=6136*/
     connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
     connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
 
-
     connect(ri1,&RI::signal_plotRadarSpoke,
             radarWidget,&RadarWidget::trigger_DrawSpoke1);
-//    connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
-//    connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
-//    connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
+    connect(ri1,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
+    connect(ri1,SIGNAL(signal_stay_alive()),rt1,SLOT(RadarStayAlive()));
+    connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri1,SLOT(trigger_clearTrail()));
 
     connect(ui->frameTrackInf,SIGNAL(signal_request_del_track(int)),
             radarWidget,SLOT(trigger_ReqDelTrack(int)));
@@ -86,6 +92,7 @@ port_command=6136*/
     connect(radarWidget,SIGNAL(signal_cursorMove(double,double)),ui->frameCursor,SLOT(trigger_cursorMove(double, double)));
 
     connect(dialRadar,SIGNAL(signal_settingChange()),ri,SLOT(trigger_ReqRadarSetting()));
+    connect(dialRadar,SIGNAL(signal_settingChange()),ri1,SLOT(trigger_ReqRadarSetting()));
     connect(dialRadar,SIGNAL(signal_settingChange()),this,SLOT(trigger_ReqRadarSetting()));
 
     connect(timer,SIGNAL(timeout()),this,SLOT(timerTimeout()));
@@ -98,11 +105,12 @@ port_command=6136*/
 void MainWindow::trigger_ReqRadarSetting()
 {
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
+    rt1->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
 }
 
 void MainWindow::trigger_shutdown()
 {
-    QSettings config(QDir::homePath()+"/.simrad/radar.conf",QSettings::IniFormat);
+    QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
     config.setValue("radar/show_ring",radar_settings.show_rings);
     config.setValue("radar/heading_up",radar_settings.headingUp);
@@ -120,14 +128,17 @@ void MainWindow::trigger_shutdown()
     config.setValue("arpa/create_arpa_by_click",arpa_settings.create_arpa_by_click);
     config.setValue("arpa/show",arpa_settings.show);
 
-    config.setValue("guardZone/show",gz_settings.show);
-    config.setValue("guardZone/enable_notif",gz_settings.enable_alarm);
-    config.setValue("guardZone/circle_type",gz_settings.circle_type);
-    config.setValue("guardZone/inner_range",gz_settings.inner_range);
-    config.setValue("guardZone/outer_range",gz_settings.outer_range);
-    config.setValue("guardZone/start_bearing",gz_settings.start_bearing);
-    config.setValue("guardZone/end_bearing",gz_settings.end_bearing);
-    config.setValue("guardZone/notif_thr",gz_settings.notif_thr);
+    for(int gz_i=0; gz_i<3; gz_i++)
+    {
+        config.setValue(QString("guardZone%1/show").arg(gz_i),gz_settings[gz_i].show);
+        config.setValue(QString("guardZone%1/enable_notif").arg(gz_i),gz_settings[gz_i].enable_alarm);
+        config.setValue(QString("guardZone%1/circle_type").arg(gz_i),gz_settings[gz_i].circle_type);
+        config.setValue(QString("guardZone%1/inner_range").arg(gz_i),gz_settings[gz_i].inner_range);
+        config.setValue(QString("guardZone%1/outer_range").arg(gz_i),gz_settings[gz_i].outer_range);
+        config.setValue(QString("guardZone%1/start_bearing").arg(gz_i),gz_settings[gz_i].start_bearing);
+        config.setValue(QString("guardZone%1/end_bearing").arg(gz_i),gz_settings[gz_i].end_bearing);
+        config.setValue(QString("guardZone%1/notif_thr").arg(gz_i),gz_settings[gz_i].notif_thr);
+    }
 
     config.setValue("trail/enable",trail_settings.enable);
     config.setValue("trail/trail",trail_settings.trail);
@@ -143,7 +154,7 @@ void MainWindow::trigger_shutdown()
     config.setValue("sensor/hdg_auto",hdg_auto);
 
     ri->receiveThread->exitReq();
-//    ri1->receiveThread->exitReq();
+    ri1->receiveThread->exitReq();
     radarWidget->trigger_shutdown();
 #ifdef Q_OS_LINUX
     sleep(1);
@@ -156,19 +167,19 @@ void MainWindow::trigger_shutdown()
 
 void MainWindow::timerTimeout()
 {
-    if(gz_settings.show)
+    if(gz_settings[0].show)
     {
-        if(gz_settings.enable_alarm)
+        if(gz_settings[0].enable_alarm)
         {
-            quint64 now = QDateTime::currentMSecsSinceEpoch();
+            quint64 now = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
             int bogey = ri->m_gz->GetBogeyCount();
-            if(bogey>gz_settings.notif_thr)
+            if(bogey > (static_cast<int>(gz_settings[0].notif_thr)))
             {
-                if(!gz_settings.confirmed || (gz_settings.confirmed && TIMED_OUT(now,gz_settings.time)))
+                if(!gz_settings[0].confirmed || (gz_settings[0].confirmed && TIMED_OUT(now,gz_settings[0].time)))
                 {
-                    qDebug()<<gz_settings.confirmed<<gz_settings.time;
-                    if(TIMED_OUT(now,gz_settings.time))
-                        gz_settings.confirmed = false;
+                    qDebug()<<gz_settings[0].confirmed<<gz_settings[0].time;
+                    if(TIMED_OUT(now,gz_settings[0].time))
+                        gz_settings[0].confirmed = false;
 
                     if(dialAlarm->isHidden())
                         dialAlarm->show();
@@ -176,7 +187,7 @@ void MainWindow::timerTimeout()
                     dialAlarm->move((width()/2)-(dialAlarm->width()/2),(height()/2)-(dialAlarm->height()/2));
                     dialAlarm->setSpotCount(bogey);
                 }
-                if((gz_settings.confirmed && !TIMED_OUT(now,gz_settings.time)))
+                if((gz_settings[0].confirmed && !TIMED_OUT(now,gz_settings[0].time)))
                     if(!dialAlarm->isHidden())
                         dialAlarm->hide();
             }
@@ -192,7 +203,7 @@ void MainWindow::timerTimeout()
                 ri->m_gz->ResetBogeys();
             if(!dialAlarm->isHidden())
                 dialAlarm->hide();
-            gz_settings.confirmed = false;
+            gz_settings[0].confirmed = false;
         }
     }
     else
@@ -201,7 +212,7 @@ void MainWindow::timerTimeout()
             ri->m_gz->ResetBogeys();
         if(!dialAlarm->isHidden())
             dialAlarm->hide();
-        gz_settings.confirmed = false;
+        gz_settings[0].confirmed = false;
     }
 
     if(curState != state_radar)
@@ -228,7 +239,10 @@ void MainWindow::timerTimeout()
         rt->setRange(g_ranges_metric[g].meters);
         */
         if(state_radar == RADAR_TRANSMIT)
+        {
             rt->setRange(curRange);
+            rt1->setRange(curRange);
+        }
     }
     if(curRange != radarWidget->getRange())
     {
@@ -257,14 +271,17 @@ void MainWindow::trigger_rangeChangeReq(int range)
 void MainWindow::trigger_gainChange(int value)
 {
     rt->setControlValue(CT_GAIN,value);
+    rt1->setControlValue(CT_GAIN,value);
 }
 void MainWindow::trigger_rainChange(int value)
 {
     rt->setControlValue(CT_RAIN,value);
+    rt1->setControlValue(CT_RAIN,value);
 }
 void MainWindow::trigger_seaChange(int value)
 {
     rt->setControlValue(CT_SEA,value);
+    rt1->setControlValue(CT_SEA,value);
 }
 
 void MainWindow::trigger_rangeChange(int range)

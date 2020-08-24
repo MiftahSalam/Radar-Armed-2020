@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     scanSignal.side_lobe_suppression = 0;
     scanSignal.local_interference_rejection = 0;
 
-    QSettings config(QDir::homePath()+"/.simrad/radar.conf",QSettings::IniFormat);
+    QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
     radar_settings.show_rings = config.value("radar/show_ring",false).toBool();
     radar_settings.headingUp = config.value("radar/heading_up",false).toBool();
@@ -42,17 +42,19 @@ int main(int argc, char *argv[])
     arpa_settings.create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();
     arpa_settings.show = config.value("arpa/show",true).toBool();
 
-
-    gz_settings.show = config.value("guardZone/show",false).toBool();
-    gz_settings.enable_alarm = config.value("guardZone/enable_notif",false).toBool();
-    gz_settings.circle_type = config.value("guardZone/circle_type",false).toBool();
-    gz_settings.inner_range = config.value("guardZone/inner_range",100).toInt();
-    gz_settings.notif_thr = config.value("guardZone/notif_thr",10).toUInt();
-    gz_settings.outer_range = config.value("guardZone/outer_range",1000).toInt();
-    gz_settings.start_bearing = config.value("guardZone/start_bearing",0).toDouble();
-    gz_settings.end_bearing = config.value("guardZone/end_bearing",90).toDouble();
-    gz_settings.timeout = config.value("guardZone/timeout",90).toInt();
-    gz_settings.confirmed = false;
+    for(int gz_i=0; gz_i<3; gz_i++)
+    {
+        gz_settings[gz_i].show = config.value(QString("guardZone%1/show").arg(gz_i),false).toBool();
+        gz_settings[gz_i].enable_alarm = config.value(QString("guardZone%1/enable_notif").arg(gz_i),false).toBool();
+        gz_settings[gz_i].circle_type = config.value(QString("guardZone%1/circle_type").arg(gz_i),false).toBool();
+        gz_settings[gz_i].inner_range = config.value(QString("guardZone%1/inner_range").arg(gz_i),100).toInt();
+        gz_settings[gz_i].notif_thr = config.value(QString("guardZone%1/notif_thr").arg(gz_i),10).toUInt();
+        gz_settings[gz_i].outer_range = config.value(QString("guardZone%1/outer_range").arg(gz_i),1000).toInt();
+        gz_settings[gz_i].start_bearing = config.value(QString("guardZone%1/start_bearing").arg(gz_i),0).toDouble();
+        gz_settings[gz_i].end_bearing = config.value(QString("guardZone%1/end_bearing").arg(gz_i),90).toDouble();
+        gz_settings[gz_i].timeout = config.value(QString("guardZone%1/timeout").arg(gz_i),90).toUInt();
+        gz_settings[gz_i].confirmed = false;
+    }
 
     trail_settings.enable = config.value("trail/enable",true).toBool();
     trail_settings.trail = config.value("trail/trail",1).toInt();
@@ -67,9 +69,9 @@ int main(int argc, char *argv[])
 
     enable_mti = config.value("mti/enable",true).toBool();
     mti_value = config.value("mti/threshold",100).toInt();
-//    qDebug()<<"gz_settings.confirmed<<gz_settings.time";
 
     MainWindow w;
+    w.resize(850,850);
     w.show();
     
     return a.exec();

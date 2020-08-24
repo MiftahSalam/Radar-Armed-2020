@@ -33,6 +33,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="comboBoxTargetTail">
+         <property name="styleSheet">
+          <string notr="true">background-color: black;</string>
+         </property>
          <item>
           <property name="text">
            <string>15 sec</string>

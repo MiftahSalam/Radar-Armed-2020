@@ -48,6 +48,9 @@
      </item>
      <item>
       <widget class="QComboBox" name="comboBoxMotion">
+       <property name="styleSheet">
+        <string notr="true">background-color: black;</string>
+       </property>
        <item>
         <property name="text">
          <string>N Up</string>
