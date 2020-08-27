@@ -72,6 +72,7 @@ port_command=6136*/
     connect(ui->frameControl2,SIGNAL(signal_change_sea_req(int)),
             this,SLOT(trigger_seaChange(int)));
 
+    connect(ri1,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
     connect(ri,&RI::signal_plotRadarSpoke,
             radarWidget,&RadarWidget::trigger_DrawSpoke);
     connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
@@ -98,9 +99,21 @@ port_command=6136*/
     connect(timer,SIGNAL(timeout()),this,SLOT(timerTimeout()));
     connect(timer,SIGNAL(timeout()),ui->frameOSD,SLOT(on_timeout()));
 
+    sockAntena = new QTcpSocket(this);
+    sockAntena->connectToHost("192.168.1.100",80);
+
     ui->frameControl1->stateChange(state_radar);
     ui->frameControl2->initParam(enable_mti,mti_value);
     timer->start(1000);
+}
+
+void MainWindow::trigger_changeAntena(QString sig)
+{
+    qDebug()<<Q_FUNC_INFO<<sig;
+    if(sockAntena->state() == QAbstractSocket::ConnectedState)
+        sockAntena->write(sig.toUtf8());
+    else if(sockAntena->state() == QAbstractSocket::UnconnectedState)
+        sockAntena->connectToHost("192.168.1.100",80);
 }
 void MainWindow::trigger_ReqRadarSetting()
 {
@@ -345,4 +358,9 @@ void MainWindow::on_pushButtonSetTrail_clicked()
 void MainWindow::on_pushButtonRadar_clicked()
 {
     dialRadar->show();
+}
+
+void MainWindow::on_pushButtonTilting_clicked()
+{
+    system("bla ... bla"); //put complete path to exe file
 }

@@ -2,8 +2,7 @@
 #define FRAMEOSD_H
 
 #include <QFrame>
-
-#include "qtmosq.h"
+#include <QUdpSocket>
 
 namespace Ui {
 class FrameOSD;
@@ -28,12 +27,13 @@ private slots:
     void on_timeout();
 
     void on_receive(QString msg);
+    void on_receiveUDP();
 
     void on_pushButtonApply_clicked();
 
 private:
     Ui::FrameOSD *ui;
-    qtmosq *m_mqtt;
+    QUdpSocket *osdSocket;
 
     enum SensorSource
     {
@@ -47,6 +47,7 @@ private:
     quint8 no_hdg_count,no_gps_count;
     bool cur_hdg_auto,cur_gps_auto;
     bool hdg_col_normal,gps_col_normal;
+    QString append_data_osd;
 
 };
 

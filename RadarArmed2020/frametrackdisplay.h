@@ -4,8 +4,7 @@
 #include <QFrame>
 #include <QStandardItemModel>
 #include <QTimer>
-
-#include "qtmosq.h"
+#include <QUdpSocket>
 
 namespace Ui {
 class FrameTrackDisplay;
@@ -33,7 +32,10 @@ private slots:
 private:
     Ui::FrameTrackDisplay *ui;
     QTimer *timer;
-    qtmosq *m_mqtt;
+    QUdpSocket *udpSocket;
+    QString serverUdpIP;
+    quint16 serverUdpPort;
+
     int dataCount_mqtt;
     QHash<int,quint64> target_time_tag_list;
     QStandardItemModel *model;

@@ -209,6 +209,16 @@ background-image: url(:/img/bg.jpeg);</string>
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="pushButtonTilting">
+           <property name="text">
+            <string>Tilting...</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </widget>

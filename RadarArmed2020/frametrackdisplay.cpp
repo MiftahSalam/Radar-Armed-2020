@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QMenu>
+#include <QSettings>
+#include <QDir>
 
 FrameTrackDisplay::FrameTrackDisplay(QWidget *parent) :
     QFrame(parent),
@@ -19,7 +21,13 @@ FrameTrackDisplay::FrameTrackDisplay(QWidget *parent) :
 
     dataCount_mqtt = 0;
 
-    m_mqtt = getMQTT();
+    QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
+
+    QString ip = config.value("server/ip","127.0.0.1").toString();
+    uint port = config.value("server/port",1883).toUInt();
+    qDebug()<<Q_FUNC_INFO<<ip<<port;
+
+    udpSocket = new QUdpSocket(this);
 
     ui->tableViewTrack->setModel(model);
 
@@ -52,32 +60,31 @@ void FrameTrackDisplay::timerTimeout()
         }
     }
 
-    if(m_mqtt->isConnected())
+
+    if(model->rowCount()>0 && model->rowCount()>dataCount_mqtt)
     {
-        if(model->rowCount()>0 && model->rowCount()>dataCount_mqtt)
-        {
-            QString id,rng,brn,spd,crs,mq_data;
-            QModelIndex index = model->index(dataCount_mqtt,0);
-            QByteArray mq_databyte;
+        QString id,rng,brn,spd,crs,mq_data;
+        QModelIndex index = model->index(dataCount_mqtt,0);
+        QByteArray mq_databyte;
 
-            id = model->data(index).toString();
-            index = model->index(dataCount_mqtt,1);
-            rng = model->data(index).toString();
-            index = model->index(dataCount_mqtt,2);
-            brn = model->data(index).toString();
-            index = model->index(dataCount_mqtt,3);
-            spd = model->data(index).toString();
-            index = model->index(dataCount_mqtt,4);
-            crs = model->data(index).toString();
+        id = model->data(index).toString();
+        index = model->index(dataCount_mqtt,1);
+        rng = model->data(index).toString();
+        index = model->index(dataCount_mqtt,2);
+        brn = model->data(index).toString();
+        index = model->index(dataCount_mqtt,3);
+        spd = model->data(index).toString();
+        index = model->index(dataCount_mqtt,4);
+        crs = model->data(index).toString();
 
-            mq_data = id+"#"+rng+"#"+brn+"#"+spd+"#"+crs;
-            mq_databyte = mq_data.toUtf8();
-            m_mqtt->publish(m_mqtt->getMID(), "radar", mq_databyte.size(), (const unsigned char*)mq_databyte.constData(), 2);
+        mq_data = id+"#"+rng+"#"+brn+"#"+spd+"#"+crs;
+        mq_databyte = mq_data.toUtf8();
+        udpSocket->writeDatagram(mq_databyte,QHostAddress(serverUdpIP),serverUdpPort);
 
-            dataCount_mqtt++;
-//            qDebug()<<"dataCount_mqtt1"<<dataCount_mqtt;
-        }
+        dataCount_mqtt++;
+        //            qDebug()<<"dataCount_mqtt1"<<dataCount_mqtt;
     }
+
 
     if(dataCount_mqtt==model->rowCount())
     {

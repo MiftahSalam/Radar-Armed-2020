@@ -28,8 +28,7 @@ SOURCES += main.cpp\
     gzdialog.cpp \
     dialogalarm.cpp \
     traildialog.cpp \
-    dialogradar.cpp \
-    qtmosq.cpp
+    dialogradar.cpp
 
 HEADERS  += mainwindow.h \
     framecontrol1.h \
@@ -43,8 +42,7 @@ HEADERS  += mainwindow.h \
     gzdialog.h \
     dialogalarm.h \
     traildialog.h \
-    dialogradar.h \
-    qtmosq.h
+    dialogradar.h
 
 FORMS    += mainwindow.ui \
     framecontrol1.ui \
@@ -66,19 +64,9 @@ win32 {
     LIBS += -LC:\Users\WLR_Engine\ -lradarengine-armed
     INCLUDEPATH += C:\Users\WLR_Engine
     DEPENDPATH += C:\Users\WLR_Engine
-
-    LIBS += -L'C:/Program Files (x86)/mosquitto/devel/' -lmosquittopp
-    INCLUDEPATH += 'C:/Program Files (x86)/mosquitto/devel'
-    DEPENDPATH += 'C:/Program Files (x86)/mosquitto/devel'
-    PRE_TARGETDEPS += 'C:/Program Files (x86)/mosquitto/devel/mosquittopp.lib'
-
 }
 else:unix {
     message(Building for Linux)
-    LIBS += -L/usr/local/lib/ -lmosquittopp
-
-    INCLUDEPATH += /usr/local/include
-    DEPENDPATH += /usr/local/include
 
     LIBS += -L/usr/lib/ -lradarengine-armed
 

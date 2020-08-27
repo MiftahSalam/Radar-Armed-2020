@@ -579,6 +579,8 @@ void RadarWidget::createMARPA(QPoint pos)
     int side = qMin(region.width(), region.height())/2;
     //    int centerY = pos.x()-(width()/2)-this->x();
     //    int centerX = pos.y()-(height()/2)-this->y();
+//    int centerX = pos.x()-(width()/2)-mapToGlobal(this->pos()).x();
+//    int centerY = pos.y()-(height()/2)-mapToGlobal(this->pos()).y();
     int centerX = pos.x()-(width()/2)-this->x();
     int centerY = pos.y()-(height()/2)-this->y();
     QPoint center_pos = QPoint(-centerY,-centerX);

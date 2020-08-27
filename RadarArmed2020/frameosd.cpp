@@ -3,6 +3,8 @@
 #include <radarengine_global.h>
 
 #include <QTime>
+#include <QSettings>
+#include <QDir>
 
 FrameOSD::FrameOSD(QWidget *parent) :
     QFrame(parent),
@@ -35,9 +37,16 @@ FrameOSD::FrameOSD(QWidget *parent) :
 //    lat = -6.9072; // cicadas gateway.
 //    lon = 107.6456;
 
-    m_mqtt = getMQTT();
+    QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
-    connect(m_mqtt,SIGNAL(messageReceived(QString)),this,SLOT(on_receive(QString)));
+    QString id = config.value("mqtt/id",false).toString();
+    QString ip = config.value("mqtt/ip",false).toString();
+    uint port = config.value("mqtt/port",false).toUInt();
+    qDebug()<<Q_FUNC_INFO<<id<<ip<<port;
+
+    osdSocket = new QUdpSocket(this);
+    connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
+    osdSocket->bind(QHostAddress::AnyIPv4,static_cast<quint16>(port));
 
     lat = currentOwnShipLat; // jingga
     lon = currentOwnShipLon;
@@ -59,18 +68,14 @@ FrameOSD::FrameOSD(QWidget *parent) :
         ui->lineEditHDG->setEnabled(false);
         ui->lineEditHDG->setStyleSheet("color: rgb(0,255,0);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->subscribe(m_mqtt->getMID(), "gyro",2);
-
+//        connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
     else
     {
         ui->lineEditHDG->setEnabled(true);
         ui->lineEditHDG->setStyleSheet("color: rgb(255,255,255);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->unsubscribe(m_mqtt->getMID(), "gyro");
-
+//        disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
 
     if(gps_auto)
@@ -78,19 +83,49 @@ FrameOSD::FrameOSD(QWidget *parent) :
         ui->lineEditLat->setEnabled(false);
         ui->lineEditLon->setEnabled(false);
 
-        if(m_mqtt->isConnected())
-            m_mqtt->subscribe(m_mqtt->getMID(), "gps",2);
-
+//        connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
     else
     {
         ui->lineEditLat->setEnabled(true);
         ui->lineEditLon->setEnabled(true);
 
-        if(m_mqtt->isConnected())
-            m_mqtt->unsubscribe(m_mqtt->getMID(), "gps");
-
+//        disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
+}
+
+void FrameOSD::on_receiveUDP()
+{
+    QByteArray datagram;
+    while (osdSocket->hasPendingDatagrams())
+    {
+        datagram.resize(static_cast<quint16>(osdSocket->pendingDatagramSize()));
+        osdSocket->readDatagram(datagram.data(), datagram.size());
+        append_data_osd.append(QString(datagram));
+    }
+//    qDebug()<<Q_FUNC_INFO<<append_data_osd;
+    int index_hdr = append_data_osd.indexOf("?");
+    if(index_hdr >= 0)
+    {
+        int index_end = append_data_osd.indexOf("!");
+        if(index_end >= 0)
+        {
+            if(index_end > index_hdr)
+            {
+                //?-6.939176#107.632770#31
+                append_data_osd = append_data_osd.mid(index_hdr,index_end-index_hdr);
+                qDebug()<<Q_FUNC_INFO<<"filter"<<append_data_osd;
+                append_data_osd.clear();
+            }
+            else
+            {
+                append_data_osd.remove(0,index_hdr);
+            }
+        }
+        qDebug()<<Q_FUNC_INFO<<index_end;
+    }
+    qDebug()<<Q_FUNC_INFO<<index_hdr;
+
 }
 double FrameOSD::getHDT()
 {
@@ -126,6 +161,8 @@ FrameOSD::~FrameOSD()
 }
 void FrameOSD::on_receive(QString msg)
 {
+    qDebug()<<Q_FUNC_INFO<<msg;
+
     if(msg.contains("gyro"))
     {
         no_hdg_count = 0;
@@ -211,13 +248,22 @@ void FrameOSD::on_timeout()
 
     }
 
-    if(!m_mqtt->isConnected())
+    if(osdSocket->state() != QAbstractSocket::BoundState)
     {
-        if(hdg_auto)
-            m_mqtt->subscribe(m_mqtt->getMID(), "gyro",2);
+        QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
-        if(gps_auto)
-            m_mqtt->subscribe(m_mqtt->getMID(), "gps",2);
+        QString id = config.value("mqtt/id",false).toString();
+        QString ip = config.value("mqtt/ip",false).toString();
+        uint port = config.value("mqtt/port",false).toUInt();
+        qDebug()<<Q_FUNC_INFO<<id<<ip<<port;
+
+        osdSocket->bind(QHostAddress::AnyIPv4,static_cast<quint16>(port));
+
+//        if(hdg_auto)
+//            connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
+
+//        if(gps_auto)
+//            disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
 }
 
@@ -254,9 +300,7 @@ void FrameOSD::on_pushButtonApply_clicked()
         ui->lineEditHDG->setEnabled(false);
         ui->lineEditHDG->setStyleSheet("color: rgb(0,255,0);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->subscribe(m_mqtt->getMID(), "gyro",2);
-
+//        connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
 
     }
     else
@@ -264,8 +308,7 @@ void FrameOSD::on_pushButtonApply_clicked()
         ui->lineEditHDG->setEnabled(true);
         ui->lineEditHDG->setStyleSheet("color: rgb(255,255,255);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->unsubscribe(m_mqtt->getMID(), "gyro");
+//        disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
 
     if(gps_auto)
@@ -275,9 +318,7 @@ void FrameOSD::on_pushButtonApply_clicked()
         ui->lineEditLat->setStyleSheet("color: rgb(0,255,0);");
         ui->lineEditLon->setStyleSheet("color: rgb(0,255,0);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->subscribe(m_mqtt->getMID(), "gps",2);
-
+//        connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
     else
     {
@@ -286,8 +327,6 @@ void FrameOSD::on_pushButtonApply_clicked()
         ui->lineEditLat->setStyleSheet("color: rgb(255,255,255);");
         ui->lineEditLon->setStyleSheet("color: rgb(255,255,255);");
 
-        if(m_mqtt->isConnected())
-            m_mqtt->unsubscribe(m_mqtt->getMID(), "gps");
-
+//        disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
 }

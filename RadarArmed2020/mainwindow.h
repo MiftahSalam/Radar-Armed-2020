@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTcpSocket>
 
 #include <radarengine.h>
 #include "radarwidget.h"
@@ -36,6 +37,7 @@ private slots:
     void trigger_shutdown();
     void trigger_rangeChangeReq(int range);
     void trigger_ReqRadarSetting();
+    void trigger_changeAntena(QString sig);
 
     void timerTimeout();
 
@@ -44,6 +46,8 @@ private slots:
     void on_pushButtonSetTrail_clicked();
 
     void on_pushButtonRadar_clicked();
+
+    void on_pushButtonTilting_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -54,6 +58,8 @@ private:
     RadarWidget *radarWidget;
     radarTransmit *rt,*rt1;
     QTimer *timer;
+    QTcpSocket *sockAntena;
+
 
     int curRange;
     int range_from_radar;
