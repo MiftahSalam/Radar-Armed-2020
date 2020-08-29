@@ -152,8 +152,8 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     glTranslatef(0.0, 0.0, -10.0);
     glScaled(1, 1, 1.);
 
-    spokeDrawer->DrawRadarImage();
     spokeDrawer1->DrawRadarImage();
+    spokeDrawer->DrawRadarImage();
 
     glBegin(GL_LINES);
     glColor3f(0,1,0);
