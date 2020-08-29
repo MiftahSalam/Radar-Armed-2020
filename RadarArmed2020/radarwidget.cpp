@@ -21,6 +21,8 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     counter = 0;
     spokeDrawer = RD::make_Draw(m_ri,0);
     spokeDrawer1 = RD::make_Draw(m_ri1,0);
+    cur_radar_angle = 0.;
+    cur_radar_angle1 = 0.;
 
     arpa = new RA(this,ri);
     arpa1 = new RA(this,ri1);
@@ -120,6 +122,12 @@ void RadarWidget::timeOut()
         old_motion_mode = radar_settings.headingUp;
     }
 
+    if(state_radar != RADAR_TRANSMIT)
+        cur_radar_angle = 0.;
+
+    if(state_radar1 != RADAR_TRANSMIT)
+        cur_radar_angle1 = 0.;
+
     update();
 }
 
@@ -146,6 +154,17 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
     spokeDrawer->DrawRadarImage();
     spokeDrawer1->DrawRadarImage();
+
+    glBegin(GL_LINES);
+    glColor3f(0,1,0);
+    glVertex2f(0,0);
+    glVertex2f(sin(static_cast<float>(deg2rad(cur_radar_angle))),
+               cos(static_cast<float>(deg2rad(cur_radar_angle))));
+    glColor3f(1,0,0);
+    glVertex2f(0,0);
+    glVertex2f(sin(static_cast<float>(deg2rad(cur_radar_angle1))),
+               cos(static_cast<float>(deg2rad(cur_radar_angle1))));
+    glEnd();
 
     glShadeModel(GL_FLAT);
     glDisable(GL_DEPTH_TEST);
@@ -285,18 +304,17 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         switch (state_radar)
         {
         case RADAR_OFF:
-            text = "No Radar";
+            text = "No Radar 1";
             break;
         case RADAR_WAKING_UP:
-            text = "Waking Up";
+            text = "R1 Waking Up";
             break;
         case RADAR_STANDBY:
-            text = "Standby";
+            text = "R1 Standby";
             break;
         default:
             break;
         }
-
 
         QFontMetrics metric = QFontMetrics(font);
         QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
@@ -306,6 +324,37 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         painter.drawText(-rect.width()/2,5,rect.width(), rect.height(),Qt::AlignCenter | Qt::TextWordWrap, text);
     }
 
+    if(state_radar1 != RADAR_TRANSMIT)
+    {
+        QString text;
+        QTextOption opt;
+        opt.setAlignment(Qt::AlignHCenter);
+        QFont font;
+
+        font.setPixelSize(32);
+        painter.setFont(font);
+
+        QFontMetrics metric = QFontMetrics(font);
+        QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
+                                         Qt::AlignCenter | Qt::TextWordWrap, text);
+
+        painter.setPen(QColor(255,0,0,255));
+        switch (state_radar1)
+        {
+        case RADAR_OFF:
+            text = "No Radar 2";
+            break;
+        case RADAR_WAKING_UP:
+            text = "R2 Waking Up ";
+            break;
+        case RADAR_STANDBY:
+            text = "R2 Standby";
+            break;
+        default:
+            break;
+        }
+        painter.drawText(-rect.width()/2,5,rect.width(), rect.height(),Qt::AlignCenter | Qt::TextWordWrap, text);
+    }
 
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     if(TIMED_OUT(now,arpa_measure_time+200))
@@ -614,15 +663,15 @@ void RadarWidget::createMARPA(QPoint pos)
 }
 void RadarWidget::trigger_DrawSpoke(int transparency, int angle, UINT8 *data, size_t len)
 {
-    //    if(data[0] > 0)
-    //    qDebug()<<Q_FUNC_INFO<<angle;
+//    qDebug()<<Q_FUNC_INFO<<angle;
+    cur_radar_angle = SCALE_RAW_TO_DEGREES2048(angle);
     spokeDrawer->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }
 void RadarWidget::trigger_DrawSpoke1(int transparency, int angle, UINT8 *data, size_t len)
 {
-    //    if(data[0] > 0)
-    //    qDebug()<<Q_FUNC_INFO<<angle;
+//    qDebug()<<Q_FUNC_INFO<<angle;
+    cur_radar_angle1 = SCALE_RAW_TO_DEGREES2048(angle);
     spokeDrawer1->ProcessRadarSpoke(transparency,angle,data,len);
     update();
 }

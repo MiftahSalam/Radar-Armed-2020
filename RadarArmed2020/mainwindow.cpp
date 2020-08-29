@@ -38,9 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ri->receiveThread->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     ri->receiveThread->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
-    ri1->receiveThread->setMulticastData("127.0.0.1",6687);
-    ri1->receiveThread->setMulticastReport(radar_settings.ip_report,6697);
-    rt1->setMulticastData(radar_settings.ip_command,6679);
+    ri1->receiveThread->setMulticastData("236.6.8.135",6711);
+    ri1->receiveThread->setMulticastReport("236.6.8.134",6710);
+    rt1->setMulticastData("236.6.8.136",6712);
     /*
 ip_data=236.6.7.103
 port_data=6135
@@ -72,7 +72,7 @@ port_command=6136*/
     connect(ui->frameControl2,SIGNAL(signal_change_sea_req(int)),
             this,SLOT(trigger_seaChange(int)));
 
-    connect(ri1,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
+    connect(ri,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
     connect(ri,&RI::signal_plotRadarSpoke,
             radarWidget,&RadarWidget::trigger_DrawSpoke);
     connect(ri,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
@@ -118,7 +118,7 @@ void MainWindow::trigger_changeAntena(QString sig)
 void MainWindow::trigger_ReqRadarSetting()
 {
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
-    rt1->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
+    rt1->setMulticastData("236.6.8.136",6712);
 }
 
 void MainWindow::trigger_shutdown()
@@ -136,6 +136,12 @@ void MainWindow::trigger_shutdown()
     config.setValue("radar/port_report",radar_settings.port_report);
     config.setValue("radar/ip_command",radar_settings.ip_command);
     config.setValue("radar/port_command",radar_settings.port_command);
+    config.setValue("radar/ip_data1",radar_settings.ip_data1);
+    config.setValue("radar/port_data1",radar_settings.port_data1);
+    config.setValue("radar/ip_report1",radar_settings.ip_report1);
+    config.setValue("radar/port_report1",radar_settings.port_report1);
+    config.setValue("radar/ip_command1",radar_settings.ip_command1);
+    config.setValue("radar/port_command1",radar_settings.port_command1);
 
     config.setValue("arpa/min_contour_len",arpa_settings.min_contour_length);
     config.setValue("arpa/create_arpa_by_click",arpa_settings.create_arpa_by_click);

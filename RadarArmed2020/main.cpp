@@ -37,6 +37,12 @@ int main(int argc, char *argv[])
     radar_settings.port_report = config.value("radar/port_report",10001).toUInt();
     radar_settings.ip_command = config.value("radar/ip_command","127.0.0.1").toString();
     radar_settings.port_command = config.value("radar/port_command",10001).toUInt();
+    radar_settings.ip_data1 = config.value("radar/ip_data1","127.0.0.1").toString();
+    radar_settings.port_data1 = config.value("radar/port_data1",10001).toUInt();
+    radar_settings.ip_report1 = config.value("radar/ip_report1","127.0.0.1").toString();
+    radar_settings.port_report1 = config.value("radar/port_report1",10001).toUInt();
+    radar_settings.ip_command1 = config.value("radar/ip_command1","127.0.0.1").toString();
+    radar_settings.port_command1 = config.value("radar/port_command1",10001).toUInt();
 
     arpa_settings.min_contour_length = config.value("arpa/min_contour_len",90).toInt();
     arpa_settings.create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();

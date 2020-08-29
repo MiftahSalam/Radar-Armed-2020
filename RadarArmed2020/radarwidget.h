@@ -56,6 +56,7 @@ private:
     QRect region;
 
     double ringWidth;
+    double cur_radar_angle,cur_radar_angle1;
     int curRange;
     int cur_arpa_id_count;
     int cur_arpa_number;

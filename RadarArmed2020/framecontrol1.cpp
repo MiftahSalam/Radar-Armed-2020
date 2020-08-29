@@ -27,6 +27,8 @@ void FrameControl1::stateChange(int state)
     }
     else
     {
+//        ui->pushButtonTxStnb->setEnabled(true);
+//        ui->pushButtonTxStnb->setText("Transmit");
         ui->pushButtonTxStnb->setEnabled(false);
         ui->pushButtonTxStnb->setText("Tx/Stby");
     }
