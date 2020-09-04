@@ -25,6 +25,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resource.qrc">
+    <normaloff>:/img/icon_radar.png</normaloff>:/img/icon_radar.png</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">color: rgb(255, 255, 255);
 background-image: url(:/img/bg.jpeg);</string>
@@ -174,7 +178,7 @@ background-image: url(:/img/bg.jpeg);</string>
           <x>6</x>
           <y>26</y>
           <width>261</width>
-          <height>164</height>
+          <height>186</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -363,6 +367,8 @@ background-image: url(:/img/bg.jpeg);</string>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

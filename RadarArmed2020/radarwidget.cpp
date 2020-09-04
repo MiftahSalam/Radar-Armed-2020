@@ -100,8 +100,8 @@ void RadarWidget::timeOut()
                 /* untuk menghitung posisi yang sudah dikoreksi
                 pol.angle = SCALE_DEGREES_TO_RAW2048(brn);
                 Position arpa_pos = Polar2Pos(pol,own_pos,curRange);
-                qDebug()<<arpa_pos.lat<<arpa_pos.lon;
                 */
+                qDebug()<<Q_FUNC_INFO<<arpa->m_target[cur_arpa_id_count]->m_position.lat<<arpa->m_target[cur_arpa_id_count]->m_position.lon;
                 emit signal_target_param(arpa->m_target[cur_arpa_id_count]->m_target_id,
                                          arpa->m_target[cur_arpa_id_count]->m_speed_kn,
                                          arpa_course,
@@ -623,15 +623,11 @@ void RadarWidget::paintEvent(QPaintEvent *event)
 
 void RadarWidget::createMARPA(QPoint pos)
 {
-    qDebug()<<Q_FUNC_INFO<<pos;
+    qDebug()<<Q_FUNC_INFO<<pos<<size()<<geometry().topLeft();
 
     int side = qMin(region.width(), region.height())/2;
-    //    int centerY = pos.x()-(width()/2)-this->x();
-    //    int centerX = pos.y()-(height()/2)-this->y();
-//    int centerX = pos.x()-(width()/2)-mapToGlobal(this->pos()).x();
-//    int centerY = pos.y()-(height()/2)-mapToGlobal(this->pos()).y();
-    int centerX = pos.x()-(width()/2)-this->x();
-    int centerY = pos.y()-(height()/2)-this->y();
+    int centerX = pos.x()-(width()/2);
+    int centerY = pos.y()-(height()/2);
     QPoint center_pos = QPoint(-centerY,-centerX);
     Polar pol;
     double deg = MOD_DEGREES(rad2deg(atan2(-center_pos.y(),center_pos.x())));
@@ -658,8 +654,10 @@ void RadarWidget::createMARPA(QPoint pos)
     Position target_pos = Polar2Pos(pol,own_pos,curRange);
     qDebug()<<Q_FUNC_INFO<<target_pos.lat<<target_pos.lon;
 
-    arpa->AcquireNewMARPATarget(target_pos);
-    arpa1->AcquireNewMARPATarget(target_pos);
+//    if(arpa->MultiPix(pol.angle,pol.r))
+        arpa->AcquireNewMARPATarget(target_pos);
+//    if(arpa1->MultiPix(pol.angle,pol.r))
+        arpa1->AcquireNewMARPATarget(target_pos);
 }
 void RadarWidget::trigger_DrawSpoke(int transparency, int angle, UINT8 *data, size_t len)
 {
@@ -720,7 +718,7 @@ void RadarWidget::mouseReleaseEvent(QMouseEvent *event)
 {
 //    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
     if(event->button()==Qt::LeftButton && arpa_settings.create_arpa_by_click)
-        createMARPA(event->globalPos());
+        createMARPA(event->pos());
 }
 
 void RadarWidget::mouseMoveEvent(QMouseEvent *event)
