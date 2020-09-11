@@ -41,13 +41,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ri1->receiveThread->setMulticastData("236.6.8.135",6711);
     ri1->receiveThread->setMulticastReport("236.6.8.134",6710);
     rt1->setMulticastData("236.6.8.136",6712);
-    /*
-ip_data=236.6.7.103
-port_data=6135
-ip_report=236.6.7.105
-port_report=6137
-ip_command=236.6.7.104
-port_command=6136*/
 #endif
     ri->receiveThread->start();
     ri1->receiveThread->start();
