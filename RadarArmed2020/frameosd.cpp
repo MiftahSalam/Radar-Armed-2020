@@ -18,10 +18,12 @@ FrameOSD::FrameOSD(QWidget *parent) :
     sog = 0;
     no_hdg_count = 0;
     cur_hdg_auto = hdg_auto;
-    hdg_col_normal = true;
+    hdg_col_normal = false;
     no_gps_count = 0;
     cur_gps_auto = gps_auto;
-    gps_col_normal = true;
+    gps_col_normal = false;
+    no_room_count = 0;
+
 //    lat = 52.0;
 //    lon = 6.0;
 
@@ -47,6 +49,10 @@ FrameOSD::FrameOSD(QWidget *parent) :
     osdSocket = new QUdpSocket(this);
     connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     osdSocket->bind(QHostAddress::AnyIPv4,static_cast<quint16>(port));
+
+    roomSocket = new QTcpSocket(this);
+    connect(roomSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveTCP);
+    roomSocket->connectToHost("192.168.1.127",80);
 
     lat = currentOwnShipLat; // jingga
     lon = currentOwnShipLon;
@@ -94,6 +100,25 @@ FrameOSD::FrameOSD(QWidget *parent) :
     }
 }
 
+void FrameOSD::on_receiveTCP()
+{
+    QString data(roomSocket->readAll());
+    QStringList data_list = data.split(" ",QString::SkipEmptyParts);
+
+    if(data_list.size() == 2)
+    {
+        ui->lineEditTemp->setText(data_list.at(0));
+        ui->lineEditHum->setText(data_list.at(1));
+        ui->lineEditTemp->setStyleSheet("color: green;");
+        ui->lineEditHum->setStyleSheet("color: green;");
+        no_room_count = 0;
+    }
+    else
+    {
+        ui->lineEditTemp->setStyleSheet("color: red;");
+        ui->lineEditHum->setStyleSheet("color: red;");
+    }
+}
 void FrameOSD::on_receiveUDP()
 {
     QByteArray datagram;
@@ -114,7 +139,26 @@ void FrameOSD::on_receiveUDP()
             {
                 //?-6.939176#107.632770#31
                 append_data_osd = append_data_osd.mid(index_hdr,index_end-index_hdr);
-                qDebug()<<Q_FUNC_INFO<<"filter"<<append_data_osd;
+                append_data_osd.remove("!").remove("?").remove("\r").remove("\n");
+//                qDebug()<<Q_FUNC_INFO<<"filter"<<append_data_osd;
+                QStringList msg_list = append_data_osd.split("#",QString::SkipEmptyParts);
+
+                if(msg_list.size() == 3)
+                {
+                    currentOwnShipLat = msg_list.at(0).toDouble();
+                    currentOwnShipLon = msg_list.at(1).toDouble();
+                    currentHeading = msg_list.at(2).toDouble();
+
+                    ui->lineEditLat->setText(msg_list.at(0));
+                    ui->lineEditLon->setText(msg_list.at(1));
+                    ui->lineEditHDG->setText(msg_list.at(2));
+
+                    no_gps_count = 0;
+                    no_hdg_count = 0;
+                }
+                else
+                    qDebug()<<Q_FUNC_INFO<<"osd invalid";
+
                 append_data_osd.clear();
             }
             else
@@ -122,9 +166,9 @@ void FrameOSD::on_receiveUDP()
                 append_data_osd.remove(0,index_hdr);
             }
         }
-        qDebug()<<Q_FUNC_INFO<<index_end;
+//        qDebug()<<Q_FUNC_INFO<<index_end;
     }
-    qDebug()<<Q_FUNC_INFO<<index_hdr;
+//    qDebug()<<Q_FUNC_INFO<<index_hdr;
 
 }
 double FrameOSD::getHDT()
@@ -173,8 +217,6 @@ void FrameOSD::on_receive(QString msg)
     }
     else if(msg.contains("gps>") )
     {
-
-
         no_gps_count = 0;
         qDebug()<<Q_FUNC_INFO<<"lat"<<msg;
         msg.remove("gps>");
@@ -216,7 +258,16 @@ void FrameOSD::on_timeout()
                 ui->lineEditHDG->setStyleSheet("color: rgb(255,0,0);");
             }
         }
+    }
 
+    no_room_count++;
+    if(no_room_count>200)
+        no_room_count = 11;
+
+    if(no_room_count>10)
+    {
+        ui->lineEditTemp->setStyleSheet("color: red;");
+        ui->lineEditHum->setStyleSheet("color: red;");
     }
 
     if(gps_auto)
@@ -258,13 +309,11 @@ void FrameOSD::on_timeout()
         qDebug()<<Q_FUNC_INFO<<id<<ip<<port;
 
         osdSocket->bind(QHostAddress::AnyIPv4,static_cast<quint16>(port));
-
-//        if(hdg_auto)
-//            connect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
-
-//        if(gps_auto)
-//            disconnect(osdSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveUDP);
     }
+
+    if(roomSocket->state() != QAbstractSocket::ConnectedState)
+        roomSocket->connectToHost("192.168.1.127",80);
+
 }
 
 void FrameOSD::on_pushButtonApply_clicked()

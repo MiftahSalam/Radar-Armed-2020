@@ -8,13 +8,14 @@ QT       += core gui opengl network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = RadarAPP
+TARGET = RadarArmed20
 TEMPLATE = app
 
 
 #DEFINES += QT_NO_DEBUG_OUTPUT
 # disable debug output in release mode
 #CONFIG(release, debug|release): DEFINES += QT_NO_DEBUG_OUTPUT
+#CONFIG += console
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -28,7 +29,8 @@ SOURCES += main.cpp\
     gzdialog.cpp \
     dialogalarm.cpp \
     traildialog.cpp \
-    dialogradar.cpp
+    dialogradar.cpp \
+    frameradarstatus.cpp
 
 HEADERS  += mainwindow.h \
     framecontrol1.h \
@@ -42,7 +44,8 @@ HEADERS  += mainwindow.h \
     gzdialog.h \
     dialogalarm.h \
     traildialog.h \
-    dialogradar.h
+    dialogradar.h \
+    frameradarstatus.h
 
 FORMS    += mainwindow.ui \
     framecontrol1.ui \
@@ -54,7 +57,8 @@ FORMS    += mainwindow.ui \
     gzdialog.ui \
     dialogalarm.ui \
     traildialog.ui \
-    dialogradar.ui
+    dialogradar.ui \
+    frameradarstatus.ui
 
 win32 {
 #    CONFIG += c++11 console

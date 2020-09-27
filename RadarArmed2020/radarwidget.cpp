@@ -297,73 +297,6 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             bufRng += ringCount;
         }
     }
-    /*
-      Radar status
-*/
-    if(state_radar != RADAR_TRANSMIT)
-    {
-        QString text;
-        QTextOption opt;
-        opt.setAlignment(Qt::AlignHCenter);
-        QFont font;
-
-        font.setPixelSize(32);
-        painter.setFont(font);
-
-        switch (state_radar)
-        {
-        case RADAR_OFF:
-            text = "No Radar 1";
-            break;
-        case RADAR_WAKING_UP:
-            text = "R1 Waking Up";
-            break;
-        case RADAR_STANDBY:
-            text = "R1 Standby";
-            break;
-        default:
-            break;
-        }
-
-        QFontMetrics metric = QFontMetrics(font);
-        QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                         Qt::AlignCenter | Qt::TextWordWrap, text);
-
-        painter.setPen(QColor(0,255,0,255));
-        painter.drawText(-rect.width()/2,5,rect.width(), rect.height(),Qt::AlignCenter | Qt::TextWordWrap, text);
-    }
-
-    if(state_radar1 != RADAR_TRANSMIT)
-    {
-        QString text;
-        QTextOption opt;
-        opt.setAlignment(Qt::AlignHCenter);
-        QFont font;
-
-        font.setPixelSize(32);
-        painter.setFont(font);
-
-        QFontMetrics metric = QFontMetrics(font);
-        QRect rect = metric.boundingRect(0,0,side, int(side*0.125),
-                                         Qt::AlignCenter | Qt::TextWordWrap, text);
-
-        painter.setPen(QColor(255,0,0,255));
-        switch (state_radar1)
-        {
-        case RADAR_OFF:
-            text = "No Radar 2";
-            break;
-        case RADAR_WAKING_UP:
-            text = "R2 Waking Up ";
-            break;
-        case RADAR_STANDBY:
-            text = "R2 Standby";
-            break;
-        default:
-            break;
-        }
-        painter.drawText(-rect.width()/2,5,rect.width(), rect.height(),Qt::AlignCenter | Qt::TextWordWrap, text);
-    }
 
     quint64 now = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     if(TIMED_OUT(now,arpa_measure_time+200))
@@ -394,7 +327,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     lines.append(line4);
     painter.drawLines(lines);
     */
-    if(arpa->m_number_of_targets>0 && arpa_settings.show)
+    if(arpa->m_number_of_targets>0 && arpa_settings[0].show)
     {
         int x1,x2,x3,x4,y1,y2,y3,y4,txtX,txtY;
         QLine line1,line2,line3,line4;
@@ -451,7 +384,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
         }
     }
 
-    if(arpa1->m_number_of_targets>0 && arpa_settings.show)
+    if(arpa1->m_number_of_targets>0 && arpa_settings[1].show)
     {
         int x1,x2,x3,x4,y1,y2,y3,y4,txtX,txtY;
         QLine line1,line2,line3,line4;
@@ -719,7 +652,7 @@ void RadarWidget::initializeGL()
 void RadarWidget::mouseReleaseEvent(QMouseEvent *event)
 {
 //    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
-    if(event->button()==Qt::LeftButton && arpa_settings.create_arpa_by_click)
+    if(event->button()==Qt::LeftButton && arpa_settings[0].create_arpa_by_click)
         createMARPA(event->pos());
 }
 

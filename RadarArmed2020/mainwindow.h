@@ -37,6 +37,8 @@ private slots:
     void trigger_shutdown();
     void trigger_rangeChangeReq(int range);
     void trigger_ReqRadarSetting();
+    void trigger_ReqRadarSetting1();
+    void trigger_RadarTx();
     void trigger_changeAntena(QString sig);
 
     void timerTimeout();

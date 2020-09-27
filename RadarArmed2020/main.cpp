@@ -43,10 +43,16 @@ int main(int argc, char *argv[])
     radar_settings.port_report1 = config.value("radar/port_report1",10001).toUInt();
     radar_settings.ip_command1 = config.value("radar/ip_command1","127.0.0.1").toString();
     radar_settings.port_command1 = config.value("radar/port_command1",10001).toUInt();
+    radar_settings.enable = true;
+    radar_settings.enable1 = true;
 
-    arpa_settings.min_contour_length = config.value("arpa/min_contour_len",90).toInt();
-    arpa_settings.create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();
-    arpa_settings.show = config.value("arpa/show",true).toBool();
+    arpa_settings[0].min_contour_length = config.value("arpa/min_contour_len",90).toInt();
+    arpa_settings[0].create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();
+    arpa_settings[0].show = config.value("arpa/show",true).toBool();
+
+    arpa_settings[1].min_contour_length = config.value("arpa1/min_contour_len",90).toInt();
+    arpa_settings[1].create_arpa_by_click = config.value("arpa1/min_contour_len",true).toBool();
+    arpa_settings[1].show = config.value("arpa1/show",true).toBool();
 
     for(int gz_i=0; gz_i<3; gz_i++)
     {
@@ -73,13 +79,19 @@ int main(int argc, char *argv[])
     gps_auto = config.value("sensor/gps_auto",false).toBool();
     hdg_auto = config.value("sensor/hdg_auto",false).toBool();
 
+    tilting_path = config.value("tilting/path","").toString();
+
     enable_mti = config.value("mti/enable",true).toBool();
     mti_value = config.value("mti/threshold",100).toInt();
 
+    bool show_max = config.value("App/show_maximize",false).toBool();
     MainWindow w;
     w.resize(850,850);
-    w.showMaximized();
-    
+    if(show_max)
+        w.showMaximized();
+    else
+        w.show();
+
     return a.exec();
 
 }

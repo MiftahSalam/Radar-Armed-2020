@@ -3,6 +3,7 @@
 
 #include <QFrame>
 #include <QUdpSocket>
+#include <QTcpSocket>
 
 namespace Ui {
 class FrameOSD;
@@ -28,12 +29,14 @@ private slots:
 
     void on_receive(QString msg);
     void on_receiveUDP();
+    void on_receiveTCP();
 
     void on_pushButtonApply_clicked();
 
 private:
     Ui::FrameOSD *ui;
     QUdpSocket *osdSocket;
+    QTcpSocket *roomSocket;
 
     enum SensorSource
     {
@@ -44,7 +47,7 @@ private:
 
     double hdt,spd,cog,sog,lat,lon;
 
-    quint8 no_hdg_count,no_gps_count;
+    quint8 no_hdg_count,no_gps_count,no_room_count;
     bool cur_hdg_auto,cur_gps_auto;
     bool hdg_col_normal,gps_col_normal;
     QString append_data_osd;

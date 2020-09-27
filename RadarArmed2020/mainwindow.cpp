@@ -38,21 +38,36 @@ MainWindow::MainWindow(QWidget *parent) :
     ri->receiveThread->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     ri->receiveThread->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
-    ri1->receiveThread->setMulticastData("236.6.8.135",6711);
-    ri1->receiveThread->setMulticastReport("236.6.8.134",6710);
-    rt1->setMulticastData("236.6.8.136",6712);
+    ri1->receiveThread->setMulticastData(radar_settings.ip_data1,radar_settings.port_data1);
+    ri1->receiveThread->setMulticastReport(radar_settings.ip_report1,radar_settings.port_report1);
+    rt1->setMulticastData(radar_settings.ip_command1,radar_settings.port_command1);
+//    ri1->receiveThread->setMulticastData("236.6.8.71",6583);
+//    ri1->receiveThread->setMulticastReport("236.6.8.73",6585);
+//    rt1->setMulticastData("236.6.8.72",6584);
+
+    /*
+void __thiscall RadarReceive::run(void) bind data multicast access succesed "236.6.8.132" 6708
+QNativeSocketEngine::bind() was not called in QAbstractSocket::UnconnectedState
+void __thiscall RadarReceive::run(void) bind data multicast access succesed "236.6.8.71" 6583
+QNativeSocketEngine::bind() was not called in QAbstractSocket::UnconnectedState
+void __thiscall RadarReceive::run(void) bind report multicast access succesed "236.6.8.134" 6710
+void __thiscall RadarReceive::run(void) bind report multicast access succesed "236.6.8.73" 6585
+
+    */
 #endif
     ri->receiveThread->start();
     ri1->receiveThread->start();
 
     connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
             rt,SLOT(RadarStby()));
-    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
-            rt,SLOT(RadarTx()));
+//    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
+//            rt,SLOT(RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
             rt1,SLOT(RadarStby()));
+    //    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
+    //            rt1,SLOT(RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
-            rt1,SLOT(RadarTx()));
+            this,SLOT(trigger_RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_shutdown()),
             this,SLOT(trigger_shutdown()));
     connect(ui->frameControl1,SIGNAL(signal_req_range(int)),
@@ -86,8 +101,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(radarWidget,SIGNAL(signal_cursorMove(double,double)),ui->frameCursor,SLOT(trigger_cursorMove(double, double)));
 
     connect(dialRadar,SIGNAL(signal_settingChange()),ri,SLOT(trigger_ReqRadarSetting()));
-    connect(dialRadar,SIGNAL(signal_settingChange()),ri1,SLOT(trigger_ReqRadarSetting()));
+    connect(dialRadar,SIGNAL(signal_settingChange1()),ri1,SLOT(trigger_ReqRadarSetting()));
     connect(dialRadar,SIGNAL(signal_settingChange()),this,SLOT(trigger_ReqRadarSetting()));
+    connect(dialRadar,SIGNAL(signal_settingChange1()),this,SLOT(trigger_ReqRadarSetting1()));
 
     connect(timer,SIGNAL(timeout()),this,SLOT(timerTimeout()));
     connect(timer,SIGNAL(timeout()),ui->frameOSD,SLOT(on_timeout()));
@@ -100,6 +116,18 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->start(1000);
 }
 
+void MainWindow::trigger_RadarTx()
+{
+    rt->RadarTx();
+    /*
+#ifdef Q_OS_LINUX
+    sleep(1);
+#elif defined (Q_OS_WIN32)
+    Sleep(500);
+#endif
+    */
+    rt1->RadarTx();
+}
 void MainWindow::trigger_changeAntena(QString sig)
 {
     qDebug()<<Q_FUNC_INFO<<sig;
@@ -111,7 +139,11 @@ void MainWindow::trigger_changeAntena(QString sig)
 void MainWindow::trigger_ReqRadarSetting()
 {
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
-    rt1->setMulticastData("236.6.8.136",6712);
+}
+void MainWindow::trigger_ReqRadarSetting1()
+{
+    rt1->setMulticastData(radar_settings.ip_command1,radar_settings.port_command1);
+//    rt1->setMulticastData("236.6.8.72",6584);
 }
 
 void MainWindow::trigger_shutdown()
@@ -136,9 +168,13 @@ void MainWindow::trigger_shutdown()
     config.setValue("radar/ip_command1",radar_settings.ip_command1);
     config.setValue("radar/port_command1",radar_settings.port_command1);
 
-    config.setValue("arpa/min_contour_len",arpa_settings.min_contour_length);
-    config.setValue("arpa/create_arpa_by_click",arpa_settings.create_arpa_by_click);
-    config.setValue("arpa/show",arpa_settings.show);
+    config.setValue("arpa/min_contour_len",arpa_settings[0].min_contour_length);
+    config.setValue("arpa/create_arpa_by_click",arpa_settings[0].create_arpa_by_click);
+    config.setValue("arpa/show",arpa_settings[0].show);
+
+    config.setValue("arpa1/min_contour_len",arpa_settings[1].min_contour_length);
+    config.setValue("arpa1/create_arpa_by_click",arpa_settings[1].create_arpa_by_click);
+    config.setValue("arpa1/show",arpa_settings[1].show);
 
     for(int gz_i=0; gz_i<3; gz_i++)
     {
@@ -164,6 +200,8 @@ void MainWindow::trigger_shutdown()
 
     config.setValue("sensor/gps_auto",gps_auto);
     config.setValue("sensor/hdg_auto",hdg_auto);
+
+    config.setValue("tilting/path",tilting_path);
 
     ri->receiveThread->exitReq();
     ri1->receiveThread->exitReq();
@@ -263,7 +301,7 @@ void MainWindow::timerTimeout()
         ui->frameControl1->setRangeRing(radarWidget->getRingWidth());
     }
 
-
+    ui->frameRadarStatus->updateStatus();
     /*next select HDG procedure*/
     currentHeading = ui->frameOSD->getHDT();
 }
@@ -325,6 +363,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     ui->frameControl2->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,0);
+    ui->frameRadarStatus->move(0,ui->frameControl1->height()+10);
 
     int radarWidgetWidth = width()-ui->frameRight->width();
     int radarWidgetHeight = height();
@@ -332,12 +371,14 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     int radarWidgetX = ((width()-ui->frameRight->width())/2)-(side/2);
     int radarWidgetY = (height()/2)-(side/2);
 
-
     radarWidget->clearMask();
-    radarWidget->setGeometry(radarWidgetX,radarWidgetY,side,side);
+    radarWidget->setGeometry(radarWidgetX,radarWidgetY+50,side,side);
     QRect rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
+    QRect rect1 = QRect(5,5,radarWidget->width()-10,20+((radarWidget->height()-10)/2));
     QRegion region = QRegion(rect,QRegion::Ellipse);
-    radarWidget->setMask(region);
+    QRegion region1 = QRegion(rect1,QRegion::Rectangle);
+    QRegion region2 = region.intersected(region1);
+    radarWidget->setMask(region2);
     radarWidget->setRectRegoin(rect);
     radarWidget->computetRingWidth();
 }
@@ -361,5 +402,6 @@ void MainWindow::on_pushButtonRadar_clicked()
 
 void MainWindow::on_pushButtonTilting_clicked()
 {
-    system("bla ... bla"); //put complete path to exe file
+    qDebug()<<Q_FUNC_INFO<<tilting_path.toUtf8();
+    system(tilting_path.toUtf8()); //put complete path to exe file
 }
