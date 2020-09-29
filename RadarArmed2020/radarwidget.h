@@ -25,7 +25,15 @@ public:
     void trigger_shutdown();
 
 signals:
-    void signal_target_param(int id,double spd, double crs, double lat, double lon);
+    void signal_target_param(int id,
+                             double lat,
+                             double lon,
+                             double alt,
+                             double rng,
+                             double brn,
+                             double spd,
+                             double crs
+                             );
     void signal_adsb_param(QString icao,double spd, double crs, double lat, double lon,double alt);
     void signal_cursorMove(double range,double brn);
 

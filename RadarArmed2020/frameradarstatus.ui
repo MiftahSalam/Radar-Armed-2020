@@ -31,7 +31,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Radar Top:</string>
+           <string>R2:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -41,7 +41,7 @@
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>Radar Bottom:</string>
+           <string>R1:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

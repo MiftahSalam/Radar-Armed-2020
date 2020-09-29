@@ -22,11 +22,11 @@
 }</string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabRBottom">
       <attribute name="title">
-       <string>Radar Bottom</string>
+       <string>R1</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -281,7 +281,7 @@
      </widget>
      <widget class="QWidget" name="tabRTop">
       <attribute name="title">
-       <string>Radar Top</string>
+       <string>R2</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>

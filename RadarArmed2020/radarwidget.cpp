@@ -103,10 +103,13 @@ void RadarWidget::timeOut()
                 */
 //                qDebug()<<Q_FUNC_INFO<<arpa->m_target[cur_arpa_id_count]->m_position.lat<<arpa->m_target[cur_arpa_id_count]->m_position.lon;
                 emit signal_target_param(arpa->m_target[cur_arpa_id_count]->m_target_id,
-                                         arpa->m_target[cur_arpa_id_count]->m_speed_kn,
-                                         arpa_course,
+                                         arpa->m_target[cur_arpa_id_count]->m_position.lat,
+                                         arpa->m_target[cur_arpa_id_count]->m_position.lon,
+                                         500, //temp
                                          range,
-                                         brn
+                                         brn,
+                                         arpa->m_target[cur_arpa_id_count]->m_speed_kn,
+                                         arpa_course
                                          );
             }
             cur_arpa_id_count++;
@@ -456,7 +459,6 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             pen.setWidth(2);
             painter.setPen(pen);
 
-//            bearing = radar_settings.headingUp ? 0 : currentHeading;
             int inner_range_pix = static_cast<int>(static_cast<double>(side)
                                                    *(gz_sett.inner_range/static_cast<double>(curRange)));
             int outer_range_pix = static_cast<int>(static_cast<double>(side)
@@ -484,6 +486,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
                 int outter_end_y = static_cast<int>(static_cast<double>(-outer_range_pix)*
                         qCos(deg2rad(90-bearing+gz_sett.end_bearing)));
                 */
+                bearing = 0.; //always headup
                 int inner_start_x = static_cast<int>(static_cast<double>(inner_range_pix)*
                         qSin(deg2rad(bearing+gz_sett.start_bearing)));
                 int inner_start_y = static_cast<int>(static_cast<double>(-inner_range_pix)*

@@ -15,7 +15,7 @@ TEMPLATE = app
 #DEFINES += QT_NO_DEBUG_OUTPUT
 # disable debug output in release mode
 #CONFIG(release, debug|release): DEFINES += QT_NO_DEBUG_OUTPUT
-#CONFIG += console
+CONFIG += console
 
 SOURCES += main.cpp\
         mainwindow.cpp \

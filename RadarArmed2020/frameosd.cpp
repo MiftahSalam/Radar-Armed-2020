@@ -52,7 +52,7 @@ FrameOSD::FrameOSD(QWidget *parent) :
 
     roomSocket = new QTcpSocket(this);
     connect(roomSocket,&QUdpSocket::readyRead,this,&FrameOSD::on_receiveTCP);
-    roomSocket->connectToHost("192.168.1.127",80);
+    roomSocket->connectToHost("192.168.1.177",80);
 
     lat = currentOwnShipLat; // jingga
     lon = currentOwnShipLon;
@@ -103,21 +103,45 @@ FrameOSD::FrameOSD(QWidget *parent) :
 void FrameOSD::on_receiveTCP()
 {
     QString data(roomSocket->readAll());
-    QStringList data_list = data.split(" ",QString::SkipEmptyParts);
 
-    if(data_list.size() == 2)
+    append_data_osd.append(data);
+
+    int index_hdr = append_data_osd.indexOf("?");
+    if(index_hdr >= 0)
     {
-        ui->lineEditTemp->setText(data_list.at(0));
-        ui->lineEditHum->setText(data_list.at(1));
-        ui->lineEditTemp->setStyleSheet("color: green;");
-        ui->lineEditHum->setStyleSheet("color: green;");
-        no_room_count = 0;
+        int index_end = append_data_osd.indexOf("!");
+        if(index_end >= 0)
+        {
+            if(index_end > index_hdr)
+            {
+                append_data_osd = append_data_osd.mid(index_hdr,index_end-index_hdr);
+                qDebug()<<Q_FUNC_INFO<<"filter"<<append_data_osd.remove("!").remove("?").remove("\r").remove("\n");
+                QStringList data_list = append_data_osd.split(" ",QString::SkipEmptyParts);
+                qDebug()<<Q_FUNC_INFO<<append_data_osd<<data_list;
+
+                if(data_list.size() == 2)
+                {
+                    ui->lineEditTemp->setText(data_list.at(1));
+                    ui->lineEditHum->setText(data_list.at(0));
+                    ui->lineEditTemp->setStyleSheet("color: green;");
+                    ui->lineEditHum->setStyleSheet("color: green;");
+                    no_room_count = 0;
+                }
+                else
+                {
+                    ui->lineEditTemp->setStyleSheet("color: red;");
+                    ui->lineEditHum->setStyleSheet("color: red;");
+                }
+
+                append_data_osd.clear();
+            }
+            else
+                append_data_osd.remove(0,index_hdr);
+
+        }
     }
-    else
-    {
-        ui->lineEditTemp->setStyleSheet("color: red;");
-        ui->lineEditHum->setStyleSheet("color: red;");
-    }
+    if(append_data_osd.size() > 50)
+        append_data_osd.clear();
 }
 void FrameOSD::on_receiveUDP()
 {
@@ -312,7 +336,8 @@ void FrameOSD::on_timeout()
     }
 
     if(roomSocket->state() != QAbstractSocket::ConnectedState)
-        roomSocket->connectToHost("192.168.1.127",80);
+        roomSocket->connectToHost("192.168.1.177",80);
+//    qDebug()<<Q_FUNC_INFO;
 
 }
 

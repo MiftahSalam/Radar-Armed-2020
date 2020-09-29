@@ -22,7 +22,16 @@ signals:
     void signal_request_del_track(int id);
 
 private slots:
-    void trigger_target_update(int id,double spd, double crs, double rng, double brn);
+    void trigger_target_update(
+            int id,
+            double lat,
+            double lon,
+            double alt,
+            double rng,
+            double brn,
+            double spd,
+            double crs
+            );
     void timerTimeout();
 
     void on_pushButtonDelSel_clicked();
@@ -38,9 +47,18 @@ private:
 
     int dataCount_mqtt;
     QHash<int,quint64> target_time_tag_list;
-    QStandardItemModel *model;
+    QStandardItemModel *model,*modelSend;
 
-    void insertList(int id,double spd, double crs, double rng, double brn);
+    void insertList(
+            int id,
+            double lat,
+            double lon,
+            double alt,
+            double rng,
+            double brn,
+            double spd,
+            double crs
+            );
 };
 
 #endif // FRAMETRACKDISPLAY_H

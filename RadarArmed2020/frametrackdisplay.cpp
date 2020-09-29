@@ -19,13 +19,17 @@ FrameTrackDisplay::FrameTrackDisplay(QWidget *parent) :
     model = new QStandardItemModel(this);
     model->setColumnCount(5);
 
+    modelSend = new QStandardItemModel(this);
+    modelSend->setColumnCount(7);
+
     dataCount_mqtt = 0;
 
     QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
-    QString ip = config.value("server/ip","127.0.0.1").toString();
-    uint port = config.value("server/port",1883).toUInt();
-    qDebug()<<Q_FUNC_INFO<<ip<<port;
+    serverUdpIP = config.value("server/ip","127.0.0.1").toString();
+    serverUdpPort = config.value("server/port",1883).toUInt();
+    qDebug()<<Q_FUNC_INFO<<serverUdpIP<<serverUdpPort;
+    serverUdpPort = 45454;
 
     udpSocket = new QUdpSocket(this);
 
@@ -57,56 +61,67 @@ void FrameTrackDisplay::timerTimeout()
         {
             int row = listTarget.at(0)->row();
             model->removeRow(row);
+            modelSend->removeRow(row);
         }
     }
 
 
-    if(model->rowCount()>0 && model->rowCount()>dataCount_mqtt)
+    if(modelSend->rowCount()>0 && modelSend->rowCount()>dataCount_mqtt)
     {
-        QString id,rng,brn,spd,crs,mq_data;
-        QModelIndex index = model->index(dataCount_mqtt,0);
+        QString id,lat,lon,alt,spd,crs,mq_data,ttg;
+        QModelIndex index = modelSend->index(dataCount_mqtt,0);
         QByteArray mq_databyte;
 
-        id = model->data(index).toString();
-        index = model->index(dataCount_mqtt,1);
-        rng = model->data(index).toString();
-        index = model->index(dataCount_mqtt,2);
-        brn = model->data(index).toString();
-        index = model->index(dataCount_mqtt,3);
-        spd = model->data(index).toString();
-        index = model->index(dataCount_mqtt,4);
-        crs = model->data(index).toString();
+        id = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,1);
+        ttg = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,2);
+        lat = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,3);
+        lon = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,4);
+        alt = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,5);
+        spd = modelSend->data(index).toString();
+        index = modelSend->index(dataCount_mqtt,5);
+        crs = modelSend->data(index).toString();
 
-        mq_data = id+"#"+rng+"#"+brn+"#"+spd+"#"+crs;
+        mq_data = "!"+id+"#"+ttg+"#"+lat+"#"+lon+"#"+alt+"#"+spd+"#"+crs+"@";
         mq_databyte = mq_data.toUtf8();
-        udpSocket->writeDatagram(mq_databyte,QHostAddress(serverUdpIP),serverUdpPort);
+        udpSocket->writeDatagram(mq_databyte,QHostAddress::Broadcast,serverUdpPort);
 
         dataCount_mqtt++;
-        //            qDebug()<<"dataCount_mqtt1"<<dataCount_mqtt;
+//        qDebug()<<"mq_data"<<mq_data;
+//        qDebug()<<"Broadcast"<<serverUdpPort;
     }
 
 
-    if(dataCount_mqtt==model->rowCount())
+    if(dataCount_mqtt==modelSend->rowCount())
     {
 //        qDebug()<<"dataCount_mqtt2"<<dataCount_mqtt;
         dataCount_mqtt = 0;
     }
-    else if(dataCount_mqtt>model->rowCount())
+    else if(dataCount_mqtt>modelSend->rowCount())
     {
 //        qDebug()<<"dataCount_mqtt3"<<dataCount_mqtt;
-        dataCount_mqtt = model->rowCount() - 1;
+        dataCount_mqtt = modelSend->rowCount() - 1;
         if(dataCount_mqtt<1)
             dataCount_mqtt = 0;
     }
-
-
-
-
 }
 
-void FrameTrackDisplay::trigger_target_update(int id, double spd, double crs, double rng, double brn)
+void FrameTrackDisplay::trigger_target_update(
+        int id,
+        double lat,
+        double lon,
+        double alt,
+        double rng,
+        double brn,
+        double spd,
+        double crs
+        )
 {
-
+    spd *= 1.852;
     quint64 new_target_tt;
     if(target_time_tag_list.contains(id))
     {
@@ -129,19 +144,43 @@ void FrameTrackDisplay::trigger_target_update(int id, double spd, double crs, do
                            QString::number(spd,'f',1));
             model->setData(model->index(row,4,QModelIndex()),
                            QString::number(crs,'f',1));
+
+            modelSend->setData(modelSend->index(row,0,QModelIndex()),
+                           id);
+            modelSend->setData(modelSend->index(row,2,QModelIndex()),
+                           QString::number(lat,'f',5));
+            modelSend->setData(modelSend->index(row,3,QModelIndex()),
+                           QString::number(lon,'f',5));
+            modelSend->setData(modelSend->index(row,4,QModelIndex()),
+                           QString::number(alt,'f',1));
+            modelSend->setData(modelSend->index(row,5,QModelIndex()),
+                           QString::number(spd,'f',1));
+            modelSend->setData(modelSend->index(row,6,QModelIndex()),
+                           QString::number(crs,'f',1));
         }
         else
-            insertList(id, spd, crs, rng, brn);
+            insertList(id, lat, lon, alt, rng, brn, spd, crs);
     }
     else
     {
         target_time_tag_list.insert(id,QDateTime::currentMSecsSinceEpoch());
-        insertList(id, spd, crs, rng, brn);
+        insertList(id, lat, lon, alt, rng, brn, spd, crs);
     }
 }
-void FrameTrackDisplay::insertList(int id, double spd, double crs, double rng, double brn)
+void FrameTrackDisplay::insertList(
+        int id,
+        double lat,
+        double lon,
+        double alt,
+        double rng,
+        double brn,
+        double spd,
+        double crs
+        )
 {
     model->insertRow(model->rowCount(),QModelIndex());
+    modelSend->insertRow(modelSend->rowCount(),QModelIndex());
+
     model->setData(model->index(model->rowCount()-1,0,QModelIndex()),
                    id);
     model->setData(model->index(model->rowCount()-1,1,QModelIndex()),
@@ -151,6 +190,21 @@ void FrameTrackDisplay::insertList(int id, double spd, double crs, double rng, d
     model->setData(model->index(model->rowCount()-1,3,QModelIndex()),
                    QString::number(spd,'f',1));
     model->setData(model->index(model->rowCount()-1,4,QModelIndex()),
+                   QString::number(crs,'f',1));
+
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,0,QModelIndex()),
+                   id);
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,1,QModelIndex()),
+                   QString::number(QDateTime::currentMSecsSinceEpoch()));
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,2,QModelIndex()),
+                   QString::number(lat,'f',5));
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,3,QModelIndex()),
+                   QString::number(lon,'f',5));
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,4,QModelIndex()),
+                   QString::number(alt,'f',1));
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,5,QModelIndex()),
+                   QString::number(spd,'f',1));
+    modelSend->setData(modelSend->index(modelSend->rowCount()-1,6,QModelIndex()),
                    QString::number(crs,'f',1));
 
     model->item(model->rowCount()-1,0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);

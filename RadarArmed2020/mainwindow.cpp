@@ -96,8 +96,8 @@ void __thiscall RadarReceive::run(void) bind report multicast access succesed "2
     connect(ui->frameTrackInf,SIGNAL(signal_request_del_track(int)),
             radarWidget,SLOT(trigger_ReqDelTrack(int)));
 
-    connect(radarWidget,SIGNAL(signal_target_param(int,double,double,double,double)),
-            ui->frameTrackInf,SLOT(trigger_target_update(int,double,double,double,double)));
+    connect(radarWidget,SIGNAL(signal_target_param(int,double,double,double,double,double,double,double)),
+            ui->frameTrackInf,SLOT(trigger_target_update(int,double,double,double,double,double,double,double)));
     connect(radarWidget,SIGNAL(signal_cursorMove(double,double)),ui->frameCursor,SLOT(trigger_cursorMove(double, double)));
 
     connect(dialRadar,SIGNAL(signal_settingChange()),ri,SLOT(trigger_ReqRadarSetting()));
@@ -363,7 +363,8 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     ui->frameControl2->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,0);
-    ui->frameRadarStatus->move(0,ui->frameControl1->height()+10);
+    ui->frameRadarStatus->move(0,
+                               ui->frameControl2->y()-ui->frameRadarStatus->height()-10);
 
     int radarWidgetWidth = width()-ui->frameRight->width();
     int radarWidgetHeight = height();
@@ -403,5 +404,6 @@ void MainWindow::on_pushButtonRadar_clicked()
 void MainWindow::on_pushButtonTilting_clicked()
 {
     qDebug()<<Q_FUNC_INFO<<tilting_path.toUtf8();
-    system(tilting_path.toUtf8()); //put complete path to exe file
+    qDebug()<<Q_FUNC_INFO<<QProcess::startDetached("cmd /k "+tilting_path);
+//    system("cmd /k "+tilting_path.toUtf8()); //put complete path to exe file
 }
