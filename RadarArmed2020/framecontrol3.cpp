@@ -2,6 +2,8 @@
 #include "ui_framecontrol3.h"
 #include <radarengine_global.h>
 
+#include <QMessageBox>
+
 FrameControl3::FrameControl3(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::FrameControl3)
@@ -31,4 +33,16 @@ void FrameControl3::on_checkBoxShowCompass_clicked(bool checked)
 void FrameControl3::on_checkBoxShowHM_clicked(bool checked)
 {
     radar_settings.show_heading_marker = checked;
+}
+
+void FrameControl3::on_checkBoxPPIFullCircle_clicked(bool checked)
+{
+    if(state_radar == RADAR_TRANSMIT)
+    {
+        QMessageBox::warning(this,"Action Discarded","Cannot change PPI mode while transmitting");
+        ui->checkBoxPPIFullCircle->setChecked(!checked);
+        return;
+    }
+    radar_settings.show_ppi_full= checked;
+    emit signal_PPIFullChanged();
 }

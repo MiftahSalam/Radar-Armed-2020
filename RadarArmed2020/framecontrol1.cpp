@@ -18,6 +18,22 @@ void FrameControl1::stateChange(int state)
     if((RadarState)state == RADAR_STANDBY)
     {
         ui->pushButtonTxStnb->setEnabled(true);
+        ui->pushButtonTxStnb->setText("Transmit");
+    }
+    else if((RadarState)state == RADAR_TRANSMIT)
+    {
+        ui->pushButtonTxStnb->setEnabled(true);
+        ui->pushButtonTxStnb->setText("Standby");
+    }
+    else
+    {
+        ui->pushButtonTxStnb->setEnabled(false);
+        ui->pushButtonTxStnb->setText("Tx/Stby");
+    }
+    /*
+    if((RadarState)state == RADAR_STANDBY)
+    {
+        ui->pushButtonTxStnb->setEnabled(true);
         if(state_radar1 == RADAR_STANDBY)
             ui->pushButtonTxStnb->setText("Transmit");
         else if(state_radar1 == RADAR_TRANSMIT)
@@ -33,6 +49,7 @@ void FrameControl1::stateChange(int state)
         ui->pushButtonTxStnb->setEnabled(false);
         ui->pushButtonTxStnb->setText("Tx/Stby");
     }
+    */
 }
 
 void FrameControl1::setRangeRing(double ringWidth)

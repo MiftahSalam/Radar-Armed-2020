@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
     radar_settings.port_command1 = config.value("radar/port_command1",10001).toUInt();
     radar_settings.enable = true;
     radar_settings.enable1 = true;
+    radar_settings.show_ppi_full = false;
 
     arpa_settings[0].min_contour_length = config.value("arpa/min_contour_len",90).toInt();
     arpa_settings[0].create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();

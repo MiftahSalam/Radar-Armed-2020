@@ -41,31 +41,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ri1->receiveThread->setMulticastData(radar_settings.ip_data1,radar_settings.port_data1);
     ri1->receiveThread->setMulticastReport(radar_settings.ip_report1,radar_settings.port_report1);
     rt1->setMulticastData(radar_settings.ip_command1,radar_settings.port_command1);
-//    ri1->receiveThread->setMulticastData("236.6.8.71",6583);
-//    ri1->receiveThread->setMulticastReport("236.6.8.73",6585);
-//    rt1->setMulticastData("236.6.8.72",6584);
-
-    /*
-void __thiscall RadarReceive::run(void) bind data multicast access succesed "236.6.8.132" 6708
-QNativeSocketEngine::bind() was not called in QAbstractSocket::UnconnectedState
-void __thiscall RadarReceive::run(void) bind data multicast access succesed "236.6.8.71" 6583
-QNativeSocketEngine::bind() was not called in QAbstractSocket::UnconnectedState
-void __thiscall RadarReceive::run(void) bind report multicast access succesed "236.6.8.134" 6710
-void __thiscall RadarReceive::run(void) bind report multicast access succesed "236.6.8.73" 6585
-
-    */
 #endif
     ri->receiveThread->start();
     ri1->receiveThread->start();
 
     connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
             rt,SLOT(RadarStby()));
-//    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
-//            rt,SLOT(RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_Stby()),
             rt1,SLOT(RadarStby()));
-    //    connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
-    //            rt1,SLOT(RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_Tx()),
             this,SLOT(trigger_RadarTx()));
     connect(ui->frameControl1,SIGNAL(signal_req_shutdown()),
@@ -79,6 +62,9 @@ void __thiscall RadarReceive::run(void) bind report multicast access succesed "2
             this,SLOT(trigger_rainChange(int)));
     connect(ui->frameControl2,SIGNAL(signal_change_sea_req(int)),
             this,SLOT(trigger_seaChange(int)));
+
+    connect(ui->frameControl3,&FrameControl3::signal_PPIFullChanged,
+            this,&MainWindow::trigger_PPIFullReq);
 
     connect(ri,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
     connect(ri,&RI::signal_plotRadarSpoke,
@@ -116,20 +102,53 @@ void __thiscall RadarReceive::run(void) bind report multicast access succesed "2
     timer->start(1000);
 }
 
+void MainWindow::trigger_PPIFullReq()
+{
+    int radarWidgetWidth = width()-ui->frameRight->width();
+    int radarWidgetHeight = height();
+    int side = qMin(radarWidgetWidth, radarWidgetHeight);
+    int radarWidgetX = ((width()-ui->frameRight->width())/2)-(side/2);
+    int radarWidgetY = (height()/2)-(side/2);
+
+    radarWidget->clearMask();
+
+    /*
+    */
+    QRect rect;
+    QRegion region = QRegion(rect,QRegion::Ellipse);
+    if(radar_settings.show_ppi_full)
+    {
+        radarWidget->setGeometry(radarWidgetX,radarWidgetY,side,side);
+        rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
+        radarWidget->setMask(region);
+        QRegion region = QRegion(rect,QRegion::Ellipse);
+        radarWidget->setMask(region);
+    }
+    else
+    {
+        radarWidget->setGeometry(radarWidgetX,radarWidgetY+50,side,side);
+        rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
+        QRect rect1 = QRect(5,5,radarWidget->width()-10,20+((radarWidget->height()-10)/2));
+        QRegion region = QRegion(rect,QRegion::Ellipse);
+        QRegion region1 = QRegion(rect1,QRegion::Rectangle);
+        QRegion region2 = region.intersected(region1);
+        radarWidget->setMask(region2);
+    }
+    radarWidget->setRectRegoin(rect);
+    radarWidget->computetRingWidth();
+}
 void MainWindow::trigger_RadarTx()
 {
-    rt->RadarTx();
-    /*
-#ifdef Q_OS_LINUX
-    sleep(1);
-#elif defined (Q_OS_WIN32)
-    Sleep(500);
-#endif
-    */
-    rt1->RadarTx();
+    if(radar_settings.enable)
+        rt->RadarTx();
+    if(radar_settings.enable1)
+        rt1->RadarTx();
 }
 void MainWindow::trigger_changeAntena(QString sig)
 {
+    if(radar_settings.show_ppi_full)
+        return;
+
     qDebug()<<Q_FUNC_INFO<<sig;
     if(sockAntena->state() == QAbstractSocket::ConnectedState)
         sockAntena->write(sig.toUtf8());
@@ -143,16 +162,21 @@ void MainWindow::trigger_ReqRadarSetting()
 void MainWindow::trigger_ReqRadarSetting1()
 {
     rt1->setMulticastData(radar_settings.ip_command1,radar_settings.port_command1);
-//    rt1->setMulticastData("236.6.8.72",6584);
 }
 
 void MainWindow::trigger_shutdown()
+{
+    close();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
 {
     QSettings config(QDir::homePath()+"/.armed20/radar.conf",QSettings::IniFormat);
 
     config.setValue("radar/show_ring",radar_settings.show_rings);
     config.setValue("radar/heading_up",radar_settings.headingUp);
     config.setValue("radar/show_compass",radar_settings.show_compass);
+    config.setValue("radar/show_ppi_full",false);
     config.setValue("radar/show_heading_marker",radar_settings.show_heading_marker);
     config.setValue("radar/last_scale",curRange);
     config.setValue("radar/ip_data",radar_settings.ip_data);
@@ -212,9 +236,8 @@ void MainWindow::trigger_shutdown()
     Sleep(1000);
 #endif
 
-    close();
+    event->accept();
 }
-
 void MainWindow::timerTimeout()
 {
     if(gz_settings[0].show)
@@ -269,6 +292,11 @@ void MainWindow::timerTimeout()
     {
         curState = state_radar;
         ui->frameControl1->stateChange(state_radar);
+    }
+    if(curState1 != state_radar1)
+    {
+        curState1 = state_radar1;
+        ui->frameControl1->stateChange(state_radar1);
     }
 
     currentOwnShipLat = ui->frameOSD->getLat();
@@ -354,7 +382,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {    
-    qDebug()<<event->size();
+    qDebug()<<event->size()<<width()<<height();
     ui->frameRight->move(width()-ui->frameRight->width(),0);
     ui->frameRight->resize(ui->frameRight->width(),height());
 
@@ -363,8 +391,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     ui->frameControl2->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,height()-ui->frameControl2->height());
     ui->frameControl1->move(0,0);
-    ui->frameRadarStatus->move(0,
-                               ui->frameControl2->y()-ui->frameRadarStatus->height()-10);
 
     int radarWidgetWidth = width()-ui->frameRight->width();
     int radarWidgetHeight = height();
@@ -373,6 +399,34 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     int radarWidgetY = (height()/2)-(side/2);
 
     radarWidget->clearMask();
+
+    /*
+    */
+    QRect rect;
+    QRegion region = QRegion(rect,QRegion::Ellipse);
+    if(radar_settings.show_ppi_full)
+    {
+        radarWidget->setGeometry(radarWidgetX,radarWidgetY,side,side);
+        rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
+        radarWidget->setMask(region);
+        QRegion region = QRegion(rect,QRegion::Ellipse);
+        radarWidget->setMask(region);
+    }
+    else
+    {
+        radarWidget->setGeometry(radarWidgetX,radarWidgetY+50,side,side);
+        rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
+        QRect rect1 = QRect(5,5,radarWidget->width()-10,20+((radarWidget->height()-10)/2));
+        QRegion region = QRegion(rect,QRegion::Ellipse);
+        QRegion region1 = QRegion(rect1,QRegion::Rectangle);
+        QRegion region2 = region.intersected(region1);
+        radarWidget->setMask(region2);
+    }
+    radarWidget->setRectRegoin(rect);
+    radarWidget->computetRingWidth();
+
+
+    /*
     radarWidget->setGeometry(radarWidgetX,radarWidgetY+50,side,side);
     QRect rect = QRect(5,5,radarWidget->width()-10,radarWidget->height()-10);
     QRect rect1 = QRect(5,5,radarWidget->width()-10,20+((radarWidget->height()-10)/2));
@@ -382,6 +436,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     radarWidget->setMask(region2);
     radarWidget->setRectRegoin(rect);
     radarWidget->computetRingWidth();
+    */
 }
 
 

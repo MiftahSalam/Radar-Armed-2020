@@ -70,7 +70,7 @@ void DialogRadar::on_pushButtonApplyTop_clicked()
 
 void DialogRadar::on_pushButtonApplyBottom_clicked()
 {
-    radar_settings.ip_data1 = ui->lineEditIPDataBottom->text().remove(" ");
+    radar_settings.ip_data = ui->lineEditIPDataBottom->text().remove(" ");
     radar_settings.port_data = ui->lineEditPortDataBottom->text().toUInt();
     radar_settings.ip_report = ui->lineEditIPReportBottom->text().remove(" ");
     radar_settings.port_report = ui->lineEditPortReportBottom->text().toUInt();

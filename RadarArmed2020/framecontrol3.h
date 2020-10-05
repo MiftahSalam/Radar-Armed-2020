@@ -15,12 +15,17 @@ public:
     explicit FrameControl3(QWidget *parent = 0);
     ~FrameControl3();
 
+signals:
+    void signal_PPIFullChanged();
+
 private slots:
     void on_comboBoxMotion_currentIndexChanged(int index);
 
     void on_checkBoxShowCompass_clicked(bool checked);
 
     void on_checkBoxShowHM_clicked(bool checked);
+
+    void on_checkBoxPPIFullCircle_clicked(bool checked);
 
 private:
     Ui::FrameControl3 *ui;

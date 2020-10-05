@@ -28,6 +28,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event);
+    void closeEvent(QCloseEvent *event);
 
 private slots:
     void trigger_rangeChange(int range);
@@ -40,6 +41,7 @@ private slots:
     void trigger_ReqRadarSetting1();
     void trigger_RadarTx();
     void trigger_changeAntena(QString sig);
+    void trigger_PPIFullReq();
 
     void timerTimeout();
 
@@ -65,7 +67,7 @@ private:
 
     int curRange;
     int range_from_radar;
-    RadarState curState;
+    RadarState curState,curState1;
 };
 
 #endif // MAINWINDOW_H

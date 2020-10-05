@@ -657,10 +657,13 @@ void RadarWidget::mouseReleaseEvent(QMouseEvent *event)
 //    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
     if(event->button()==Qt::LeftButton && arpa_settings[0].create_arpa_by_click)
         createMARPA(event->pos());
+    else if(event->button()==Qt::RightButton && arpa_settings[0].create_arpa_by_click)
+        qDebug()<<Q_FUNC_INFO<<"right button";
 }
 
 void RadarWidget::mouseMoveEvent(QMouseEvent *event)
 {
+    Q_UNUSED(event);
 
     int side = qMin(region.width(), region.height())/2;
     QPoint os_pos(region.width()/2,region.height()/2);
