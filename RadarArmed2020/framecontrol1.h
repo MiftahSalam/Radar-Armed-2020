@@ -23,6 +23,7 @@ signals:
     void signal_req_Tx();
     void signal_req_Stby();
     void signal_req_shutdown();
+    void signal_antena_man_switch();
 
 private slots:
     void on_pushButtonZoomIn_clicked();
@@ -34,6 +35,8 @@ private slots:
     void on_checkBoxShowRing_clicked(bool checked);
 
     void on_pushButtonTxStnb_2_clicked();
+
+    void on_pushButtonRFToggle_clicked();
 
 private:
     Ui::FrameControl1 *ui;

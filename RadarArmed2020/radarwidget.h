@@ -49,6 +49,7 @@ public slots:
     void trigger_DrawSpoke(int transparency, int angle, UINT8* data, size_t len);
     void trigger_DrawSpoke1(int transparency, int angle, UINT8* data, size_t len);
     void trigger_ReqDelTrack(int id);
+    void trigger_simTriggered();
 
 private:
     void setupViewport(int width, int height);
@@ -62,6 +63,9 @@ private:
     RA *arpa1;
     QTimer *timer;
     QRect region;
+    QUdpSocket *simUdpSocket;
+    QString append_data_sim;
+    Position dummy_pos;
 
     double ringWidth;
     double cur_radar_angle,cur_radar_angle1;
@@ -70,6 +74,7 @@ private:
     int cur_arpa_number;
     quint64 arpa_measure_time;
     quint64 arpa_measure_time1;
+    qint64 dummy_timeout;
     bool old_motion_mode;
 
     int old_x1;

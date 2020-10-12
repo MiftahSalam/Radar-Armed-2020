@@ -66,6 +66,7 @@ void DialogRadar::on_pushButtonApplyTop_clicked()
     radar_settings.enable1 = ui->checkBoxEnableTop->isChecked();
 
     emit signal_settingChange1();
+    emit signal_settingChange();
 }
 
 void DialogRadar::on_pushButtonApplyBottom_clicked()
@@ -79,5 +80,5 @@ void DialogRadar::on_pushButtonApplyBottom_clicked()
     radar_settings.enable = ui->checkBoxEnableBottom->isChecked();
 
     emit signal_settingChange();
-
+    emit signal_settingChange1();
 }

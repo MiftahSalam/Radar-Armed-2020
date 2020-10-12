@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>165</width>
-    <height>152</height>
+    <height>154</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -167,6 +167,13 @@
     <widget class="QPushButton" name="pushButtonTxStnb_2">
      <property name="text">
       <string>Shutdown</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButtonRFToggle">
+     <property name="text">
+      <string>RF Switch Toggle</string>
      </property>
     </widget>
    </item>

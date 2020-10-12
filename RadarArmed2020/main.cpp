@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
     radar_settings.show_ppi_full = false;
 
     arpa_settings[0].min_contour_length = config.value("arpa/min_contour_len",90).toInt();
-    arpa_settings[0].create_arpa_by_click = config.value("arpa/min_contour_len",true).toBool();
+    arpa_settings[0].create_arpa_by_click = config.value("arpa/create_arpa_by_click",true).toBool();
     arpa_settings[0].show = config.value("arpa/show",true).toBool();
 
     arpa_settings[1].min_contour_length = config.value("arpa1/min_contour_len",90).toInt();
-    arpa_settings[1].create_arpa_by_click = config.value("arpa1/min_contour_len",true).toBool();
+    arpa_settings[1].create_arpa_by_click = config.value("arpa1/create_arpa_by_click",true).toBool();
     arpa_settings[1].show = config.value("arpa1/show",true).toBool();
 
     for(int gz_i=0; gz_i<3; gz_i++)

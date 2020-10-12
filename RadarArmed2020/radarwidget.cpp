@@ -27,6 +27,12 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     arpa = new RA(this,ri);
     arpa1 = new RA(this,ri1);
 
+    simUdpSocket = new QUdpSocket(this);
+    connect(simUdpSocket,&QUdpSocket::readyRead,this,&RadarWidget::trigger_simTriggered);
+//    simUdpSocket->bind(QHostAddress("192.168.1.74"),20001);
+    simUdpSocket->bind(22222,QUdpSocket::ShareAddress);
+//    simUdpSocket->bind(20001,QUdpSocket::ShareAddress);
+
     timer  = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(timeOut()));
     timer->start(100);
@@ -43,7 +49,83 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     cur_arpa_number = 0;
     arpa_measure_time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     arpa_measure_time1 = arpa_measure_time;
+    dummy_timeout = 0;
+    append_data_sim.clear();
+}
 
+void RadarWidget::trigger_simTriggered()
+{
+    QByteArray datagram;
+    while (simUdpSocket->hasPendingDatagrams())
+    {
+        datagram.resize(static_cast<int>(simUdpSocket->pendingDatagramSize()));
+        simUdpSocket->readDatagram(datagram.data(), datagram.size());
+    }
+
+//    datagram.append("@").prepend("!");
+    if(datagram.size() > 0)
+    {
+        dummy_timeout = QDateTime::currentMSecsSinceEpoch();
+        append_data_sim.append(datagram);
+
+        int index_hdr = append_data_sim.indexOf("!");
+        if(index_hdr >= 0)
+        {
+            int index_end = append_data_sim.indexOf("@");
+            if(index_end >= 0)
+            {
+                if(index_end > index_hdr)
+                {
+                    append_data_sim = append_data_sim.mid(index_hdr,index_end-index_hdr);
+                    append_data_sim.remove("@").remove("!").remove("\r").remove("\n");
+//                    qDebug()<<Q_FUNC_INFO<<append_data_sim;
+                    QStringList data_list = append_data_sim.split("#",QString::SkipEmptyParts);
+
+//                    if(data_list.size() == 2)
+                        if(data_list.size() == 3)
+                    {
+                        append_data_sim.clear();
+
+                        /*
+                         * lat=-6.939225
+                         * lon=107.63279
+                         */
+                //        dummy_pos.lat = -6.939400;
+//                        dummy_pos.lat = -6.938025;
+//                        dummy_pos.lon = 107.63179;
+                        dummy_pos.lat = data_list.at(0).toDouble();
+                        dummy_pos.lon = data_list.at(1).toDouble();
+                        /*
+                        qDebug()<<Q_FUNC_INFO<<curRange
+                               <<QString("%1").arg(dummy_pos.lat,0,'g',13)
+                                                                 <<QString("%1").arg(dummy_pos.lon,0,'g',13);
+                        */
+
+//                        double range = 50;
+//                        double sudut = 50;
+                        /*
+                        double range = data_list.at(0).toDouble();
+                        double sudut = data_list.at(1).toDouble();
+                        sudut = radar_settings.headingUp ? sudut+currentHeading : sudut;
+                        Polar polar_dummy;
+                        Position own_pos;
+                        own_pos.lat = currentOwnShipLat;
+                        own_pos.lon = currentOwnShipLon;
+                        polar_dummy.r = (int)(range*RETURNS_PER_LINE/((double)curRange));
+                        polar_dummy.angle = SCALE_DEGREES_TO_RAW2048(sudut);
+                        dummy_pos = Polar2Pos(polar_dummy,own_pos,curRange);
+                        */
+                    }
+                }
+                else
+                    append_data_sim.remove(0,index_hdr);
+            }
+        }
+        if(append_data_sim.size() > 50)
+            append_data_sim.clear();
+    }
+
+//    qDebug()<<Q_FUNC_INFO<<datagram;
 }
 void RadarWidget::trigger_ReqDelTrack(int id)
 {
@@ -158,6 +240,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     spokeDrawer1->DrawRadarImage();
     spokeDrawer->DrawRadarImage();
 
+    /*
     glBegin(GL_LINES);
     glColor3f(0,1,0);
     glVertex2f(0,0);
@@ -168,6 +251,7 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     glVertex2f(sin(static_cast<float>(deg2rad(cur_radar_angle1))),
                cos(static_cast<float>(deg2rad(cur_radar_angle1))));
     glEnd();
+    */
 
     glShadeModel(GL_FLAT);
     glDisable(GL_DEPTH_TEST);
@@ -302,6 +386,32 @@ void RadarWidget::paintEvent(QPaintEvent *event)
     }
 
     quint64 now = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
+
+    if((now-dummy_timeout) < 2500)
+    {
+
+        Position own_pos;
+        Polar dummy_pol;
+
+        own_pos.lat = currentOwnShipLat;
+        own_pos.lon = currentOwnShipLon;
+        dummy_pol = Pos2Polar(dummy_pos,own_pos,curRange);
+        qreal dummy_angle = -SCALE_RAW_TO_DEGREES2048(dummy_pol.angle)+90.;
+        dummy_angle = radar_settings.headingUp ? dummy_angle+currentHeading : dummy_angle;
+        QLineF dummy_line = QLineF::fromPolar(dummy_pol.r*side/RETURNS_PER_LINE,
+                                              dummy_angle);
+
+        /*
+            qDebug()<<Q_FUNC_INFO<<curRange<<dummy_pol.r<<dummy_pol.angle<<dummy_line
+                   <<-SCALE_RAW_TO_DEGREES2048(dummy_pol.angle)+90<<dummy_pol.r*side/RETURNS_PER_LINE;
+            */
+
+//        QImage image(":/img/dummy_echo_drone.png");
+        QImage image(":/img/dummy_echo_puluru.png");
+        image = image.scaled(image.width()/2,image.height()/2);
+        painter.drawImage(dummy_line.p2().x(),dummy_line.p2().y(),image);
+    }
+
     if(TIMED_OUT(now,arpa_measure_time+200))
     {
         arpa_measure_time = now;
@@ -654,7 +764,7 @@ void RadarWidget::initializeGL()
 
 void RadarWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-//    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
+    qDebug()<<Q_FUNC_INFO<<event->pos()<<event->globalPos();
     if(event->button()==Qt::LeftButton && arpa_settings[0].create_arpa_by_click)
         createMARPA(event->pos());
     else if(event->button()==Qt::RightButton && arpa_settings[0].create_arpa_by_click)

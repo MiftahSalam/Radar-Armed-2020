@@ -9,8 +9,15 @@ FrameControl1::FrameControl1(QWidget *parent) :
     ui->setupUi(this);
 
     ui->checkBoxShowRing->setChecked(radar_settings.show_rings);
-    double init_rng = radar_settings.last_scale/1000;
-    ui->labelRange->setText(QString::number(init_rng)+" km");
+    double init_rng = (double)radar_settings.last_scale/1000.;
+    if(init_rng < 1)
+    {
+        init_rng *= 1000.;
+        ui->labelRange->setText(QString::number((int)init_rng)+" m");
+    }
+    else
+        ui->labelRange->setText(QString::number((int)init_rng)+" km");
+
     ringValue = "";
 }
 void FrameControl1::stateChange(int state)
@@ -120,4 +127,9 @@ void FrameControl1::on_checkBoxShowRing_clicked(bool checked)
 void FrameControl1::on_pushButtonTxStnb_2_clicked()
 {
     emit signal_req_shutdown();
+}
+
+void FrameControl1::on_pushButtonRFToggle_clicked()
+{
+    emit signal_antena_man_switch();
 }

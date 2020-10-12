@@ -16,9 +16,18 @@ public:
     ~FrameRadarStatus();
 
     void updateStatus();
+    void updateAntena(QString data);
+
+public slots:
+    void trigger_reportR1();
+    void trigger_reportR2();
 
 private:
     Ui::FrameRadarStatus *ui;
+
+    QString append_data_osd;
+    int reportCounter1,reportCounter2,no_anten_count;
+
 };
 
 #endif // FRAMERADARSTATUS_H

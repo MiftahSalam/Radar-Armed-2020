@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     curRange = radar_settings.last_scale;
     range_from_radar = 0;
+    cur_antena = "0";
 
     rt = new radarTransmit(this);
     rt1 = new radarTransmit(this);
@@ -55,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(trigger_shutdown()));
     connect(ui->frameControl1,SIGNAL(signal_req_range(int)),
             this,SLOT(trigger_rangeChangeReq(int)));
+    connect(ui->frameControl1,SIGNAL(signal_antena_man_switch()),
+            this,SLOT(trigger_changeAntenaMan()));
 
     connect(ui->frameControl2,SIGNAL(signal_change_gain_req(int)),
             this,SLOT(trigger_gainChange(int)));
@@ -66,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->frameControl3,&FrameControl3::signal_PPIFullChanged,
             this,&MainWindow::trigger_PPIFullReq);
 
+    connect(ri,&RI::signal_report,ui->frameRadarStatus,&FrameRadarStatus::trigger_reportR1);
     connect(ri,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
     connect(ri,&RI::signal_plotRadarSpoke,
             radarWidget,&RadarWidget::trigger_DrawSpoke);
@@ -73,6 +77,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ri,SIGNAL(signal_stay_alive()),rt,SLOT(RadarStayAlive()));
     connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri,SLOT(trigger_clearTrail()));
 
+    connect(ri1,&RI::signal_report,ui->frameRadarStatus,&FrameRadarStatus::trigger_reportR2);
+    connect(ri1,&RI::signal_changeAntena,this,&MainWindow::trigger_changeAntena);
     connect(ri1,&RI::signal_plotRadarSpoke,
             radarWidget,&RadarWidget::trigger_DrawSpoke1);
     connect(ri1,SIGNAL(signal_range_change(int)),this,SLOT(trigger_rangeChange(int)));
@@ -95,6 +101,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(timer,SIGNAL(timeout()),ui->frameOSD,SLOT(on_timeout()));
 
     sockAntena = new QTcpSocket(this);
+    connect(sockAntena,&QTcpSocket::readyRead,this,&MainWindow::trigger_antenaFeedback);
     sockAntena->connectToHost("192.168.1.100",80);
 
     ui->frameControl1->stateChange(state_radar);
@@ -102,6 +109,10 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->start(1000);
 }
 
+void MainWindow::trigger_antenaFeedback()
+{
+    ui->frameRadarStatus->updateAntena(sockAntena->readAll());
+}
 void MainWindow::trigger_PPIFullReq()
 {
     int radarWidgetWidth = width()-ui->frameRight->width();
@@ -144,17 +155,31 @@ void MainWindow::trigger_RadarTx()
     if(radar_settings.enable1)
         rt1->RadarTx();
 }
+
 void MainWindow::trigger_changeAntena(QString sig)
 {
     if(radar_settings.show_ppi_full)
         return;
 
-    qDebug()<<Q_FUNC_INFO<<sig;
+    cur_antena = sig;
+    qDebug()<<Q_FUNC_INFO<<cur_antena;
     if(sockAntena->state() == QAbstractSocket::ConnectedState)
-        sockAntena->write(sig.toUtf8());
+        sockAntena->write(cur_antena.toUtf8());
     else if(sockAntena->state() == QAbstractSocket::UnconnectedState)
         sockAntena->connectToHost("192.168.1.100",80);
 }
+
+void MainWindow::trigger_changeAntenaMan()
+{
+    cur_antena = (cur_antena == "0") ? "1" : "0";
+
+    qDebug()<<Q_FUNC_INFO<<cur_antena;
+    if(sockAntena->state() == QAbstractSocket::ConnectedState)
+        sockAntena->write(cur_antena.toUtf8());
+    else if(sockAntena->state() == QAbstractSocket::UnconnectedState)
+        sockAntena->connectToHost("192.168.1.100",80);
+}
+
 void MainWindow::trigger_ReqRadarSetting()
 {
     rt->setMulticastData(radar_settings.ip_command,radar_settings.port_command);

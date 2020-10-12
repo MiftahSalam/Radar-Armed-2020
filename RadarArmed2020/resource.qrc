@@ -2,5 +2,8 @@
     <qresource prefix="/img">
         <file>bg.jpeg</file>
         <file>icon_radar.png</file>
+        <file>dummy_echo.png</file>
+        <file>dummy_echo_drone.png</file>
+        <file>dummy_echo_puluru.png</file>
     </qresource>
 </RCC>
