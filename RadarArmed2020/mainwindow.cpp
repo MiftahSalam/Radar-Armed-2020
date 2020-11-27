@@ -85,11 +85,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ri1,SIGNAL(signal_stay_alive()),rt1,SLOT(RadarStayAlive()));
     connect(dialTrail,SIGNAL(signal_clearTrailReq()),ri1,SLOT(trigger_clearTrail()));
 
-    connect(ui->frameTrackInf,SIGNAL(signal_request_del_track(int)),
-            radarWidget,SLOT(trigger_ReqDelTrack(int)));
+    connect(ui->frameTrackInf,SIGNAL(signal_request_del_track(bool,int)),
+            radarWidget,SLOT(trigger_ReqDelTrack(bool,int)));
 
-    connect(radarWidget,SIGNAL(signal_target_param(int,double,double,double,double,double,double,double)),
-            ui->frameTrackInf,SLOT(trigger_target_update(int,double,double,double,double,double,double,double)));
+    connect(radarWidget,SIGNAL(signal_target_param(bool,int,double,double,double,double,double,double,double)),
+            ui->frameTrackInf,SLOT(trigger_target_update(bool,int,double,double,double,double,double,double,double)));
     connect(radarWidget,SIGNAL(signal_cursorMove(double,double)),ui->frameCursor,SLOT(trigger_cursorMove(double, double)));
 
     connect(dialRadar,SIGNAL(signal_settingChange()),ri,SLOT(trigger_ReqRadarSetting()));

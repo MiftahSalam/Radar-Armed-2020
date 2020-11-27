@@ -22,7 +22,7 @@
 }</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabRBottom">
       <attribute name="title">
@@ -36,7 +36,7 @@
            <item>
             <widget class="QCheckBox" name="checkBoxShowARPABottom">
              <property name="text">
-              <string>Show ARPA</string>
+              <string>Show Track</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -291,7 +291,7 @@
            <item>
             <widget class="QCheckBox" name="checkBoxShowARPATop">
              <property name="text">
-              <string>Show ARPA</string>
+              <string>Show Track</string>
              </property>
              <property name="checked">
               <bool>true</bool>

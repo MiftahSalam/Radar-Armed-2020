@@ -19,10 +19,11 @@ public:
     ~FrameTrackDisplay();
 
 signals:
-    void signal_request_del_track(int id);
+    void signal_request_del_track(bool r1,int id);
 
 private slots:
     void trigger_target_update(
+            bool r1,
             int id,
             double lat,
             double lon,
@@ -46,10 +47,11 @@ private:
     quint16 serverUdpPort;
 
     int dataCount_mqtt;
-    QHash<int,quint64> target_time_tag_list;
+    QHash<int,quint64> target_time_tag_list,target_time_tag_list1;
     QStandardItemModel *model,*modelSend;
 
     void insertList(
+            bool r1,
             int id,
             double lat,
             double lon,

@@ -8,6 +8,19 @@ GZDialog::GZDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->label_14->hide();
+    ui->label_18->hide();
+    ui->label_29->hide();
+    ui->label_30->hide();
+    ui->label_19->hide();
+    ui->label_16->hide();
+    ui->lineEditNotifTHR->hide();
+    ui->lineEditNotifTHR_2->hide();
+    ui->lineEditNotifTHR_3->hide();
+    ui->checkBoxAlarmGZ->hide();
+    ui->checkBoxAlarmGZ_2->hide();
+    ui->checkBoxAlarmGZ_3->hide();
+
     ui->lineEditInner->setValidator(new QDoubleValidator(0.0,60.0,2,ui->lineEditInner));
     ui->lineEditOuter->setValidator(new QDoubleValidator(0.0,60.0,2,ui->lineEditOuter));
     ui->lineEditStart->setValidator(new QDoubleValidator(0.0,360.0,1,ui->lineEditStart));

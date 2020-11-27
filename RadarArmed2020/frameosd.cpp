@@ -256,7 +256,7 @@ void FrameOSD::on_receive(QString msg)
 
 void FrameOSD::on_timeout()
 {
-    ui->lineEditGMT->setText(QDateTime::currentDateTimeUtc().time().toString("hh:mm:ss"));
+    ui->lineEditGMT->setText(QDateTime::currentDateTime().time().toString("hh:mm:ss"));
 
     if(hdg_auto)
     {

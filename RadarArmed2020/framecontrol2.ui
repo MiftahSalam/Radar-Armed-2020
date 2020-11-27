@@ -191,7 +191,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonRain">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="maximumSize">
         <size>
@@ -208,7 +208,7 @@
         <string notr="true"/>
        </property>
        <property name="text">
-        <string>Sky</string>
+        <string>Rain</string>
        </property>
       </widget>
      </item>

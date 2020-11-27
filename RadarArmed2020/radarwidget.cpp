@@ -46,6 +46,7 @@ RadarWidget::RadarWidget(QWidget *parent, RI *ri, RI *ri1)
     old_motion_mode = radar_settings.headingUp;
     curRange = 0;
     cur_arpa_id_count = 0;
+    cur_arpa_id_count1 = 0;
     cur_arpa_number = 0;
     arpa_measure_time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     arpa_measure_time1 = arpa_measure_time;
@@ -127,16 +128,20 @@ void RadarWidget::trigger_simTriggered()
 
 //    qDebug()<<Q_FUNC_INFO<<datagram;
 }
-void RadarWidget::trigger_ReqDelTrack(int id)
+void RadarWidget::trigger_ReqDelTrack(bool r1,int id)
 {
     if(id>-10)
     {
-        for(int i=0;i<arpa->m_number_of_targets;i++)
-            if(arpa->m_target[i]->m_target_id == id)
-                arpa->m_target[i]->SetStatusLost();
+        RA *cur_arpa = r1 ? arpa : arpa1;
+        for(int i=0;i<cur_arpa->m_number_of_targets;i++)
+            if(cur_arpa->m_target[i]->m_target_id == id)
+                cur_arpa->m_target[i]->SetStatusLost();
     }
     else
+    {
         arpa->DeleteAllTargets();
+        arpa1->DeleteAllTargets();
+    }
 }
 
 void RadarWidget::timeOut()
@@ -148,6 +153,7 @@ void RadarWidget::timeOut()
     double brn;
     double range;
 
+//    qDebug()<<Q_FUNC_INFO<<arpa->m_number_of_targets;
     if(arpa->m_number_of_targets > 0)
     {
         int num_limit = 5;
@@ -184,10 +190,11 @@ void RadarWidget::timeOut()
                 Position arpa_pos = Polar2Pos(pol,own_pos,curRange);
                 */
 //                qDebug()<<Q_FUNC_INFO<<arpa->m_target[cur_arpa_id_count]->m_position.lat<<arpa->m_target[cur_arpa_id_count]->m_position.lon;
-                emit signal_target_param(arpa->m_target[cur_arpa_id_count]->m_target_id,
+                emit signal_target_param(true,
+                                         arpa->m_target[cur_arpa_id_count]->m_target_id,
                                          arpa->m_target[cur_arpa_id_count]->m_position.lat,
                                          arpa->m_target[cur_arpa_id_count]->m_position.lon,
-                                         500, //temp
+                                         arpa->m_target[cur_arpa_id_count]->m_position.alt, //temp
                                          range,
                                          brn,
                                          arpa->m_target[cur_arpa_id_count]->m_speed_kn,
@@ -201,9 +208,64 @@ void RadarWidget::timeOut()
             cur_arpa_id_count = 0;
     }
 
+    if(arpa1->m_number_of_targets > 0)
+    {
+        int num_limit = 5;
+        while ((cur_arpa_id_count1 < arpa1->m_number_of_targets) && num_limit > 0)
+        {
+            if(arpa1->m_target[cur_arpa_id_count1]->m_target_id > 0)
+            {
+                pol = Pos2Polar(arpa1->m_target[cur_arpa_id_count1]->m_position,own_pos,curRange);
+                brn = SCALE_RAW_TO_DEGREES2048(pol.angle);
+//                brn -= 270;
+                brn = radar_settings.headingUp ? brn+currentHeading : brn;
+                while(brn>360 || brn<0)
+                {
+                    if(brn>360)
+                        brn -= 360;
+                    if(brn<0)
+                        brn += 360;
+                }
+
+                double arpa_course = arpa1->m_target[cur_arpa_id_count1]->m_course;
+//                arpa_course -= 270;
+                arpa_course = radar_settings.headingUp ? arpa_course+currentHeading : arpa_course;
+                while(arpa_course>360 || arpa_course<0)
+                {
+                    if(arpa_course>360)
+                        arpa_course -= 360;
+                    if(arpa_course<0)
+                        arpa_course += 360;
+                }
+
+                range = static_cast<double>(curRange*pol.r/RETURNS_PER_LINE)/1000.;
+                /* untuk menghitung posisi yang sudah dikoreksi
+                pol.angle = SCALE_DEGREES_TO_RAW2048(brn);
+                Position arpa_pos = Polar2Pos(pol,own_pos,curRange);
+                */
+//                qDebug()<<Q_FUNC_INFO<<arpa1->m_target[cur_arpa_id_count1]->m_position.lat<<arpa->m_target[cur_arpa_id_count]->m_position.lon;
+                emit signal_target_param(false,
+                                         arpa1->m_target[cur_arpa_id_count1]->m_target_id,
+                                         arpa1->m_target[cur_arpa_id_count1]->m_position.lat,
+                                         arpa1->m_target[cur_arpa_id_count1]->m_position.lon,
+                                         arpa1->m_target[cur_arpa_id_count1]->m_position.alt, //temp
+                                         range,
+                                         brn,
+                                         arpa1->m_target[cur_arpa_id_count1]->m_speed_kn,
+                                         arpa_course
+                                         );
+            }
+            cur_arpa_id_count1++;
+            num_limit--;
+        }
+        if(cur_arpa_id_count1 >= arpa1->m_number_of_targets)
+            cur_arpa_id_count1 = 0;
+    }
+
     if(old_motion_mode^radar_settings.headingUp)
     {
         arpa->DeleteAllTargets();
+        arpa1->DeleteAllTargets();
         old_motion_mode = radar_settings.headingUp;
     }
 
@@ -487,9 +549,12 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             target_text = QString::number(arpa->m_target[i]->m_target_id);
             rect = metric.boundingRect(0,0,side, int(side*0.125),
                                        Qt::AlignCenter | Qt::TextWordWrap, target_text);
+            txtX = x2 + 10;
+            txtY = y2 + 10;
+            /*
             txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
             txtY = y1 - (rect.height()*qSin(deg2rad(a_min/2))) -5;
-
+            */
             pen.setWidth(1);
             painter.setPen(pen);
             painter.drawText(txtX,txtY,rect.width(), rect.height(),
@@ -544,9 +609,12 @@ void RadarWidget::paintEvent(QPaintEvent *event)
             target_text = QString::number(arpa1->m_target[i]->m_target_id);
             rect = metric.boundingRect(0,0,side, int(side*0.125),
                                        Qt::AlignCenter | Qt::TextWordWrap, target_text);
+            txtX = x1 + 10;
+            txtY = y1 + 10;
+            /*
             txtX = x1 - (rect.width()*qSin(deg2rad(a_min))) - 5;
             txtY = y1 - (rect.height()*qSin(deg2rad(a_min/2))) -5;
-
+            */
             pen.setWidth(1);
             painter.setPen(pen);
             painter.drawText(txtX,txtY,rect.width(), rect.height(),

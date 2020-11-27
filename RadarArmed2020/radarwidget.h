@@ -25,7 +25,8 @@ public:
     void trigger_shutdown();
 
 signals:
-    void signal_target_param(int id,
+    void signal_target_param(bool r1,
+                             int id,
                              double lat,
                              double lon,
                              double alt,
@@ -48,7 +49,7 @@ public slots:
     void timeOut();
     void trigger_DrawSpoke(int transparency, int angle, UINT8* data, size_t len);
     void trigger_DrawSpoke1(int transparency, int angle, UINT8* data, size_t len);
-    void trigger_ReqDelTrack(int id);
+    void trigger_ReqDelTrack(bool r1,int id);
     void trigger_simTriggered();
 
 private:
@@ -70,7 +71,7 @@ private:
     double ringWidth;
     double cur_radar_angle,cur_radar_angle1;
     int curRange;
-    int cur_arpa_id_count;
+    int cur_arpa_id_count,cur_arpa_id_count1;
     int cur_arpa_number;
     quint64 arpa_measure_time;
     quint64 arpa_measure_time1;

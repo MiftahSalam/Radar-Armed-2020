@@ -29,7 +29,7 @@ FrameTrackDisplay::FrameTrackDisplay(QWidget *parent) :
     serverUdpIP = config.value("server/ip","127.0.0.1").toString();
     serverUdpPort = config.value("server/port",1883).toUInt();
     qDebug()<<Q_FUNC_INFO<<serverUdpIP<<serverUdpPort;
-    serverUdpPort = 45454;
+//    serverUdpPort = 45454;
 
     udpSocket = new QUdpSocket(this);
 
@@ -48,7 +48,7 @@ void FrameTrackDisplay::timerTimeout()
     while(i.hasNext())
     {
         i.next();
-        if(now-i.value()>5000)
+        if(now-i.value()>1000)
             target_to_delete.append(i.key());
     }
 
@@ -56,7 +56,7 @@ void FrameTrackDisplay::timerTimeout()
     {
         target_time_tag_list.remove(target_to_delete.at(i));
 
-        QList<QStandardItem *> listTarget = model->findItems(QString::number(target_to_delete.at(i)),0);
+        QList<QStandardItem *> listTarget = model->findItems("R1-"+QString::number(target_to_delete.at(i)),0);
         if(!listTarget.isEmpty())
         {
             int row = listTarget.at(0)->row();
@@ -65,6 +65,28 @@ void FrameTrackDisplay::timerTimeout()
         }
     }
 
+    QHashIterator<int,quint64> j(target_time_tag_list1);
+
+    target_to_delete.clear();
+    while(j.hasNext())
+    {
+        j.next();
+        if(now-j.value()>1000)
+            target_to_delete.append(j.key());
+    }
+
+    for(int i=0;i<target_to_delete.size();i++)
+    {
+        target_time_tag_list1.remove(target_to_delete.at(i));
+
+        QList<QStandardItem *> listTarget = model->findItems("R2-"+QString::number(target_to_delete.at(i)),0);
+        if(!listTarget.isEmpty())
+        {
+            int row = listTarget.at(0)->row();
+            model->removeRow(row);
+            modelSend->removeRow(row);
+        }
+    }
 
     if(modelSend->rowCount()>0 && modelSend->rowCount()>dataCount_mqtt)
     {
@@ -83,8 +105,13 @@ void FrameTrackDisplay::timerTimeout()
         alt = modelSend->data(index).toString();
         index = modelSend->index(dataCount_mqtt,5);
         spd = modelSend->data(index).toString();
-        index = modelSend->index(dataCount_mqtt,5);
+        index = modelSend->index(dataCount_mqtt,6);
         crs = modelSend->data(index).toString();
+        lat.replace(".",",");
+        lon.replace(".",",");
+        alt.replace(".",",");
+        spd.replace(".",",");
+        crs.replace(".",",");
 
         mq_data = "!"+id+"#"+ttg+"#"+lat+"#"+lon+"#"+alt+"#"+spd+"#"+crs+"@";
         mq_databyte = mq_data.toUtf8();
@@ -111,6 +138,7 @@ void FrameTrackDisplay::timerTimeout()
 }
 
 void FrameTrackDisplay::trigger_target_update(
+        bool r1,
         int id,
         double lat,
         double lon,
@@ -123,19 +151,21 @@ void FrameTrackDisplay::trigger_target_update(
 {
     spd *= 1.852;
     quint64 new_target_tt;
-    if(target_time_tag_list.contains(id))
+    QHash<int,quint64> *cur_target_time_tag_list = r1 ? &target_time_tag_list : &target_time_tag_list1;
+    if(cur_target_time_tag_list->contains(id))
     {
-        new_target_tt = target_time_tag_list.value(id);
+        new_target_tt = cur_target_time_tag_list->value(id);
         new_target_tt = QDateTime::currentMSecsSinceEpoch();
-        target_time_tag_list.remove(id);
-        target_time_tag_list.insert(id,new_target_tt);
+        cur_target_time_tag_list->remove(id);
+        cur_target_time_tag_list->insert(id,new_target_tt);
 
-        QList<QStandardItem *> listTarget = model->findItems(QString::number(id),0);
+        QList<QStandardItem *> listTarget = model->findItems(r1 ? "R1-"+QString::number(id) : "R2-"+QString::number(id)
+                                                                  ,0);
         if(!listTarget.isEmpty())
         {
             int row = listTarget.at(0)->row();
             model->setData(model->index(row,0,QModelIndex()),
-                           id);
+                           r1 ? "R1-"+QString::number(id) : "R2-"+QString::number(id));
             model->setData(model->index(row,1,QModelIndex()),
                            QString::number(rng,'f',1));
             model->setData(model->index(row,2,QModelIndex()),
@@ -146,7 +176,11 @@ void FrameTrackDisplay::trigger_target_update(
                            QString::number(crs,'f',1));
 
             modelSend->setData(modelSend->index(row,0,QModelIndex()),
-                           id);
+                           r1 ? "R1-"+QString::number(id) : "R2-"+QString::number(id));
+            /*
+            modelSend->setData(modelSend->index(row,1,QModelIndex()),
+                           QString::number(QDateTime::currentMSecsSinceEpoch()));
+            */
             modelSend->setData(modelSend->index(row,2,QModelIndex()),
                            QString::number(lat,'f',5));
             modelSend->setData(modelSend->index(row,3,QModelIndex()),
@@ -159,15 +193,16 @@ void FrameTrackDisplay::trigger_target_update(
                            QString::number(crs,'f',1));
         }
         else
-            insertList(id, lat, lon, alt, rng, brn, spd, crs);
+            insertList(r1,id, lat, lon, alt, rng, brn, spd, crs);
     }
     else
     {
-        target_time_tag_list.insert(id,QDateTime::currentMSecsSinceEpoch());
-        insertList(id, lat, lon, alt, rng, brn, spd, crs);
+        cur_target_time_tag_list->insert(id,QDateTime::currentMSecsSinceEpoch());
+        insertList(r1,id, lat, lon, alt, rng, brn, spd, crs);
     }
 }
 void FrameTrackDisplay::insertList(
+        bool r1,
         int id,
         double lat,
         double lon,
@@ -182,7 +217,7 @@ void FrameTrackDisplay::insertList(
     modelSend->insertRow(modelSend->rowCount(),QModelIndex());
 
     model->setData(model->index(model->rowCount()-1,0,QModelIndex()),
-                   id);
+                   r1 ? "R1-"+QString::number(id) : "R2-"+QString::number(id));
     model->setData(model->index(model->rowCount()-1,1,QModelIndex()),
                    QString::number(rng,'f',1));
     model->setData(model->index(model->rowCount()-1,2,QModelIndex()),
@@ -193,7 +228,7 @@ void FrameTrackDisplay::insertList(
                    QString::number(crs,'f',1));
 
     modelSend->setData(modelSend->index(modelSend->rowCount()-1,0,QModelIndex()),
-                   id);
+                   r1 ? "R1-"+QString::number(id) : "R2-"+QString::number(id));
     modelSend->setData(modelSend->index(modelSend->rowCount()-1,1,QModelIndex()),
                    QString::number(QDateTime::currentMSecsSinceEpoch()));
     modelSend->setData(modelSend->index(modelSend->rowCount()-1,2,QModelIndex()),
@@ -225,9 +260,11 @@ void FrameTrackDisplay::on_pushButtonDelSel_clicked()
     if(row_count>0)
     {
         int row = ui->tableViewTrack->currentIndex().row();
-        int id = model->index(row,0).data().toInt();
+        QString id_str = model->index(row,0).data().toString();
+        bool r1 = id_str.contains("R1");
+        int id = id_str.remove(0,3).toInt();
 
-        emit signal_request_del_track(id);
+        emit signal_request_del_track(r1,id);
     }
 }
 
@@ -235,5 +272,5 @@ void FrameTrackDisplay::on_pushButtonDelAll_clicked()
 {
     int row_count = model->rowCount();
     if(row_count>0)
-        emit signal_request_del_track(-100);
+        emit signal_request_del_track(true,-100);
 }
